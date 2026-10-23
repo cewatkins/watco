@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0 done.** Next: **S1.**
+Status: **S0 done. S1 done on local main — not pushed to origin.** Next: **S2.**
 
 ---
 
