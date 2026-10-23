@@ -13,12 +13,42 @@
  */
 
 export const FIXED_DT = 1 / 60;
-export const FIELD_ELEV_M = 870;
+
+/**
+ * Field elevation, MSL. 2,871 ft is the published number a Boise pilot already
+ * knows; the meter figure is converted once, here, and the placard on the page
+ * reads the same height. (S0 used 870 m — about 2,854 ft — which disagreed
+ * with the placard. S1 reconciles them at the feet number.)
+ */
+export const FIELD_ELEV_FT = 2871;
+export const FIELD_ELEV_M = FIELD_ELEV_FT * 0.3048; // 875.08 m
+
 export const G = 9.80665;
-export const MASS = 1043;
-export const WING_AREA = 16.2;
-export const GEAR_HEIGHT = 1.55;
-export const THRUST_MAX = 2500;
+export const GEAR_HEIGHT = 1.55; // m, CG above the wheels
+
+/**
+ * The aero table — every number the model integrates with, one row each,
+ * each with a one-line source.
+ *
+ *   "Handbook, rounded" = a 172-class public handbook figure, converted and
+ *   rounded — not a claim of certification.
+ *   "Tuning" = a named choice made to keep this reduced model honest at
+ *   trainer speeds. If a tick test fails, tune one of these rows and update
+ *   its name; do not grow the model.
+ */
+export const MASS = 1043; // kg — handbook, rounded: 172-class gross weight
+export const WING_AREA = 16.2; // m² — handbook, rounded: 174 ft² on the sheet
+export const LIFT_SLOPE = 5.0; // per rad — tuning: linear slope held to trim the stall
+export const CL0 = 0.2; // tuning: zero-lift lift at the model's level trim attitude
+export const STALL_ALPHA_CLEAN = 0.26; // rad — tuning: stall angle of attack, clean
+export const STALL_ALPHA_FLAPS = 0.3; // rad — tuning: stall angle with flaps, at the same slope
+export const FLAP_CL: Partial<Record<Flaps, number>> = { 10: 0.22, 20: 0.4, 30: 0.55 }; // tuning: lift increment per flap notch
+export const FLAP_CD: Partial<Record<Flaps, number>> = { 10: 0.015, 20: 0.03, 30: 0.05 }; // tuning: drag price per flap notch
+export const CD0 = 0.03; // parasite drag — tuning: hands-off 172-class cruise speeds
+export const INDUCED_K = 0.055; // drag rises with CL² — tuning: glide a trainer can live with
+export const THRUST_MAX = 2500; // N static — tuning: thrust-to-weight ~1:4 so W owns the run
+export const THRUST_LAPSE = 0.4; // tuning: share of thrust lost by 85 m/s
+export const STALL_BREAK = 0.62; // tuning: CL kept past the break, so the stall bites then quits
 
 export const RWY_HDG = 280;
 export const RWY_LENGTH = 2400;
@@ -151,17 +181,11 @@ export function rhoAt(agl: number): number {
 }
 
 function flapCL(flaps: Flaps): number {
-  if (flaps === 10) return 0.22;
-  if (flaps === 20) return 0.4;
-  if (flaps === 30) return 0.55;
-  return 0;
+  return FLAP_CL[flaps] ?? 0;
 }
 
 function flapCD(flaps: Flaps): number {
-  if (flaps === 10) return 0.015;
-  if (flaps === 20) return 0.03;
-  if (flaps === 30) return 0.05;
-  return 0;
+  return FLAP_CD[flaps] ?? 0;
 }
 
 export function createShip(init: Partial<Ship> & Pick<Ship, "id" | "callsign">): Ship {
@@ -282,16 +306,16 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
   const vUp = ax * u.x + ay * u.y + az * u.z;
   const alpha = Math.atan2(-vUp, Math.max(vFwd, 0.75));
 
-  const stallA = input.flaps > 0 ? 0.3 : 0.26;
-  let cl = 0.2 + 5.0 * alpha + flapCL(input.flaps);
+  const stallA = input.flaps > 0 ? STALL_ALPHA_FLAPS : STALL_ALPHA_CLEAN;
+  let cl = CL0 + LIFT_SLOPE * alpha + flapCL(input.flaps);
   const stalled = alpha > stallA && !ship.onGround && tas > 20;
-  if (alpha > stallA) cl *= 0.62;
+  if (alpha > stallA) cl *= STALL_BREAK;
   cl = clamp(cl, -0.35, input.flaps > 0 ? 2.05 : 1.62);
-  const cd = 0.03 + 0.055 * cl * cl + flapCD(input.flaps);
+  const cd = CD0 + INDUCED_K * cl * cl + flapCD(input.flaps);
   const q = 0.5 * rho * tas * tas;
   const lift = q * WING_AREA * cl;
   const drag = q * WING_AREA * cd;
-  const thrust = ship.throttle * THRUST_MAX * (1 - 0.4 * Math.min(tas, 85) / 85);
+  const thrust = ship.throttle * THRUST_MAX * (1 - THRUST_LAPSE * Math.min(tas, 85) / 85);
 
   let lx = u.x;
   let ly = u.y;
