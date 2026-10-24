@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0 done. S1 done on local main — not pushed to origin.** Next: **S2.**
+Status: **S0–S2 done on local main — not pushed to origin.** Next: **S3.**
 
 ---
 
@@ -41,6 +41,9 @@ Status: **S0 done. S1 done on local main — not pushed to origin.** Next: **S2.
 ---
 
 ## S2 — The contract is the type, not the comment
+
+**Status:** done. `docs/contracts/step.md` records state ownership, axes,
+units, fixed-step timing, and the rendering boundary.
 
 **Harness:** OpenCode. This one crosses files.
 

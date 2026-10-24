@@ -28,7 +28,10 @@ Agent role cards live in [agents/](agents/).
 
 ## Where the project sits
 
-Spine chapter **S0 is done**. The site is published. The next required chapter is **S1** (name the numbers, lock a headless tick test). Side quests are closed until the lead pilot opens one. Public World is closed until S6.
+Spine chapters **S0–S2 are done locally**. The site is published. The next
+required chapter is **S3** (make the briefing tell the truth). Side quests
+still require the lead pilot to open each quest. Public World is closed until
+S6.
 
 ## A chapter is a commit, not a mood
 

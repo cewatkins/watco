@@ -54,6 +54,10 @@ Fixed step `FIXED_DT = 1/60`. Mass 1043 kg. Wing area 16.2 m². Max thrust 2500 
 
 `Ship` is the whole state a picture needs. If a gauge needs a fact that is not on `Ship`, add the fact in `step`, then read it. Do not recompute aerodynamics in the panel.
 
+The ownership, axes, units, and fixed-step rules are recorded in the
+[`step()` state contract](contracts/step.md). Constructors and `placeAirborne`
+may set initial state; only `step()` integrates the aircraft forward.
+
 ### `src/sim/scene.ts` — the picture
 
 Three.js. Builds a procedural trainer (high wing, prop, beacon, stripe color per ship), a runway with 28 and 10 painted on it, sagebrush, a windsock aimed by the constant wind, fog, and hills that are scenery, not collision.
