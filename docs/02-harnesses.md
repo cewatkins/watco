@@ -4,11 +4,16 @@ A harness is the program that carries the model: it can edit files, run commands
 
 | Role | Default tool | Writes flight code? | Browses and downloads? |
 |---|---|---|---|
-| In-repo chapter | **Grok CLI** | Yes, inside one chapter | No |
-| Multi-file refactor | **OpenCode** | Yes, still inside one chapter | No |
+| In-repo chapter | **Grok CLI**; Copilot may follow this discipline | Yes, inside one chapter | No |
+| Multi-file refactor | **OpenCode**; Copilot may follow this discipline | Yes, still inside one chapter | No |
 | Search and fetch | **OpenClaw**, or the human's browser | No | Yes |
 
 If you only have one of these, use it for its role and do the other role yourself. Do not pretend a coding agent verified a license by guessing.
+
+Copilot is a supported harness, not a fourth role. Before it edits, the brief
+must say whether it is acting as the in-repo chapter writer or the multi-file
+writer. It follows that role's file limits and handoff rules. Do not assign
+Copilot and another coding harness to write the same chapter at the same time.
 
 ## Grok CLI — the daily tool
 
@@ -71,3 +76,8 @@ Not a role, and not welcome as one:
 ## Handoff
 
 When the search role finishes, it leaves a pack manifest and a fixture. It does not leave a drive-by edit in `src/`. When the code role finishes, it leaves a passing test and a commit message. It does not leave a browse log in place of the license.
+
+For the cockpit proposal, use
+[the shared implementation plan](quests/cockpit-view-plan.md) across all
+harnesses. It names the visual target, data contract, sequence, test gates, and
+the current S2 blocker. The lead pilot opens each quest before implementation.

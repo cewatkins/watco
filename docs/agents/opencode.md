@@ -9,6 +9,12 @@ You do one chapter whose change crosses a seam: model, picture, and panel have t
 
 Typical chapters: S2, S5, S8, Q-second-airframe, P2, P4's mesh integration, P5's glue after a WASM artifact already exists.
 
+For the cockpit view, read [the shared plan](../quests/cockpit-view-plan.md)
+before proposing the file list. The work crosses the scene, camera, and panel:
+keep it one chapter writer, finish Q-panel before Q-views, and stop at the S2
+gate until that prerequisite is on main. Procedural geometry is the default;
+do not copy a simulator screenshot or download a cockpit model.
+
 ## Before editing
 
 Read the same pages Grok CLI reads, plus `docs/contracts/step.md` if S2 has already written it. List the files you expect to touch. If that list is longer than the chapter's `Touches`, stop and show the list. Do not "explore" by editing.

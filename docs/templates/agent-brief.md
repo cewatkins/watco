@@ -10,7 +10,9 @@ You are working in the Field 28 repo. Read these, in order, before you edit:
 3. docs/03-where-we-are.md
 4. The chapter: <path to S- or Q- or P- section, or a quest file>
 
-You are the <grok-cli | opencode | search> role.
+You are the <grok-cli | opencode | copilot | search> role.
+If you are Copilot, say whether you are following the Grok CLI or OpenCode
+discipline for this chapter.
 
 Do only chapter <id>. Do not start the next chapter.
 Do not edit files outside that chapter's Touches list.
@@ -30,4 +32,5 @@ Role files:
 
 - Grok CLI → `docs/agents/grok-cli.md`
 - OpenCode → `docs/agents/opencode.md`
+- Copilot → `docs/agents/copilot.md`
 - Search harness → `docs/agents/openclaw.md`

@@ -9,8 +9,21 @@ You are the lead pilot, the student, or both. The harness does not outrank you. 
 3. Pick the harness from the chapter's line, not from whichever window is already open.
    - One file, one behavior → Grok CLI.
    - A seam between model, picture, and panel → OpenCode.
+   - Copilot may fill either coding role, but name which role's rules it follows.
    - A URL and a license → OpenClaw or your own browser. Then a coding harness, in a **second** session.
 4. Paste `docs/templates/agent-brief.md` with the chapter id filled in.
+
+## Cockpit work
+
+Use [the shared cockpit view plan](../quests/cockpit-view-plan.md) as the
+handoff source for every harness. It is intentionally not an authorization to
+start coding: S2 is now complete locally. Open Q-panel and Q-views in order.
+Assign one writer per quest, even if a second harness could work on a different
+file; the panel and camera meet in the same scene.
+
+The supplied screenshot and web references are visual guidance only. Keep the
+Field 28 trainer generic, draw cockpit parts procedurally, and do not add
+third-party cockpit art, logos, or branded aircraft names to the product.
 
 ## While it works
 
