@@ -15,7 +15,7 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
 - Read a procedural six-pack driven by the same airplane state as the text
   backup row.
 - Toggle day/night lighting, with procedural runway edge lights at night.
-- Watch N344TG hold a left orbit at about 1,000 ft above the field.
+- Watch N344TG fly a left practice rectangle at about 1,000 ft above the field.
 - Crash on a wing strike, a prop strike, or a hard landing, then reset (`R`).
 - Fly with keys, a gamepad, or the phone yoke.
 - Choose a healthy trainer, partial power capped at 55% thrust, or a small
@@ -59,7 +59,10 @@ Fixed step `FIXED_DT = 1/60`. Mass 1043 kg. Wing area 16.2 m². Max thrust 2500 
 - Writes instrument fields onto the ship: IAS, TAS, altitude, AGL, vertical speed, heading, angle of attack, stall flag.
 - Sets `crashed` and a short reason. A crashed ship stops stepping.
 
-`patternPilot(ship)` returns a `PilotInput`. It does not move the airplane itself. Traffic goes through the same `step` you do. Today that pilot holds a **circle** of radius 1200 m around the runway center, near y = 305 m. It is not yet a rectangular traffic pattern. That is S4, not a bug you silently "fix" inside another chapter.
+`patternPilot(ship)` returns a `PilotInput`. It does not move the airplane itself.
+Traffic goes through the same `step` you do. S4 uses a 2,600 × 1,000 m left
+rectangle with rounded turns from a 300 m lookahead, near y = 305 m.
+The traffic flies an altitude-hold practice circuit, not a landing.
 
 `Ship` is the whole state a picture needs. If a gauge needs a fact that is not on `Ship`, add the fact in `step`, then read it. Do not recompute aerodynamics in the panel.
 
@@ -99,7 +102,7 @@ object.
 
 | You might expect | Where it actually stands |
 |---|---|
-| A rectangular traffic pattern | Orbit. S4 |
+| A rectangular traffic pattern | S4 left practice circuit, tested for three simulated minutes |
 | Live wind you can change | Two constants, `WIND_FROM_DEG` and `WIND_KT`. S6 turns them into an argument |
 | A second airplane type | One mass, one wing, one thrust. A later quest may add a **table**, not a second `step` |
 | Multiplayer | `src/lib/multiplayer/p2p.ts` is a WebRTC client looking for `POST /api/rtc`. That route does not exist. Nothing in the sim imports it. S8 decides what "another human" means, and it is not "call this class and hope" |

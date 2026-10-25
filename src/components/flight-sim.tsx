@@ -311,7 +311,7 @@ export function FlightSim() {
           if (phaseRef.current === "fly" && player.onGround && player.iasKt < 50) hint = "Throttle with W. Steer with A and D.";
           else if (phaseRef.current === "fly" && player.onGround && player.iasKt >= 50) hint = "Rotate. Pull the nose up with the down arrow.";
           else if (player.stalled) hint = "Stall. Relax the back pressure. Wings level.";
-          else if (phaseRef.current === "fly" && !player.onGround) hint = "Practice left turns. N344TG is flying an orbit.";
+          else if (phaseRef.current === "fly" && !player.onGround) hint = "Left circuit is yours. N344TG flies the practice pattern.";
           hintRef.current.textContent = hint;
         }
         if (trafficRefEl.current) {
@@ -573,7 +573,7 @@ export function FlightSim() {
               <li>Runway {RWY_HDG / 10}: {RWY_LENGTH.toLocaleString("en-US")} × {RWY_WIDTH} m; field elevation {FIELD_ELEV_FT.toLocaleString("en-US")} ft.</li>
               <li>Wind from {WIND_FROM_DEG}° at {WIND_KT} kt. Full throttle, then pull to rotate once speed builds.</li>
               <li>Flaps add lift and drag; extend for slower approaches, retract for a clean climb.</li>
-              <li>N344TG flies an orbit near the field, not a rectangular pattern yet.</li>
+              <li>N344TG flies an altitude-hold left practice circuit, not a landing approach.</li>
             </ul>
             <fieldset className="mt-4">
               <legend className="font-mono text-xs tracking-widest text-muted">AIRCRAFT CONDITION</legend>

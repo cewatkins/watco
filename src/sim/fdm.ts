@@ -237,31 +237,61 @@ export function createPlayer(): Ship {
   });
 }
 
-/** Left pattern, already established on a 1,000 ft orbit so the field is never empty. */
+export const PATTERN_HEIGHT = 305; // m AGL, about 1,000 ft
+export const PATTERN_NEAR = -100;
+export const PATTERN_FAR = 2500;
+export const PATTERN_WIDTH = 1000; // m, about half a nautical mile
+export const PATTERN_LEGS = ["upwind", "crosswind", "downwind", "base", "final"] as const;
+export type PatternLeg = (typeof PATTERN_LEGS)[number];
+
+export function runwayPosition(ship: Pick<Ship, "x" | "z">) {
+  const f = runwayForward();
+  const r = runwayRight();
+  const dx = ship.x - THRESH_X;
+  const dz = ship.z - THRESH_Z;
+  return { along: dx * f.x + dz * f.z, across: dx * r.x + dz * r.z };
+}
+
+/** Nearest segment on the left circuit; all coordinates are runway-local meters. */
+export function patternPosition(ship: Pick<Ship, "x" | "z">) {
+  const { along, across } = runwayPosition(ship);
+  const corners: [number, number][] = [
+    [PATTERN_NEAR, 0], [PATTERN_FAR, 0],
+    [PATTERN_FAR, -PATTERN_WIDTH], [PATTERN_NEAR, -PATTERN_WIDTH],
+  ];
+  let closest = { segment: 0, fraction: 0, distance: Infinity };
+  for (let segment = 0; segment < corners.length; segment++) {
+    const [ax, ay] = corners[segment]!;
+    const [bx, by] = corners[(segment + 1) % corners.length]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const fraction = clamp(((along - ax) * dx + (across - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+    const distance = Math.hypot(along - ax - dx * fraction, across - ay - dy * fraction);
+    // Adjacent segments share an endpoint; float noise must not alternate legs.
+    if (distance < closest.distance - 1e-6) closest = { segment, fraction, distance };
+  }
+  const leg: PatternLeg = closest.segment === 0
+    ? along < 500 ? "final" : "upwind"
+    : closest.segment === 1 ? "crosswind" : closest.segment === 2 ? "downwind" : "base";
+  return { ...closest, leg, along, across };
+}
+
+/** Already established upwind; the pilot flies an altitude-hold practice circuit. */
 export function createTraffic(): Ship {
-  const c = runwayCenter();
-  const R = 1200;
-  const ang = 0.9;
-  const x = c.x + Math.sin(ang) * R;
-  const z = c.z + Math.cos(ang) * R;
-  const dx = x - c.x;
-  const dz = z - c.z;
-  const outwardYaw = Math.atan2(-dx / R, -dz / R);
-  const yaw = outwardYaw + Math.PI / 2;
-  const { f } = basis(yaw, 0.04, 0.22);
+  const f = runwayForward();
   const speed = 46;
   return createShip({
     id: "tg",
     callsign: "N344TG",
-    x,
-    y: 305,
-    z,
-    yaw,
+    x: THRESH_X + f.x * 800,
+    y: PATTERN_HEIGHT,
+    z: THRESH_Z + f.z * 800,
+    yaw: RWY_YAW,
     pitch: 0.05,
-    roll: 0.22,
-    vx: f.x * speed,
+    roll: 0,
+    vx: f.x * speed + WIND_X,
     vy: 0.2,
-    vz: f.z * speed,
+    vz: f.z * speed + WIND_Z,
     throttle: 0.68,
     onGround: false,
     rpm: 2200,
@@ -458,18 +488,32 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
   refreshInstruments(ship, Math.hypot(ship.vx - WIND_X, ship.vy, ship.vz - WIND_Z), rho, alpha, stalled);
 }
 
-/** Holds a left orbit at pattern altitude. Inputs only — same step() as the player. */
+/** Look ahead along the rectangle; only controls, never aircraft position. */
 export function patternPilot(ship: Ship): PilotInput {
-  const c = runwayCenter();
-  const R = 1200;
-  const dx = ship.x - c.x;
-  const dz = ship.z - c.z;
-  const dist = Math.hypot(dx, dz) || 1;
-  const outwardYaw = Math.atan2(-dx / dist, -dz / dist);
-  const radial = clamp((dist - R) / R, -0.45, 0.45);
-  const desiredYaw = outwardYaw + Math.PI / 2 + radial * 0.8;
+  const corners: [number, number][] = [
+    [PATTERN_NEAR, 0], [PATTERN_FAR, 0],
+    [PATTERN_FAR, -PATTERN_WIDTH], [PATTERN_NEAR, -PATTERN_WIDTH],
+  ];
+  const position = patternPosition(ship);
+  let segment = position.segment;
+  let distance = position.fraction * (segment % 2 === 0 ? PATTERN_FAR - PATTERN_NEAR : PATTERN_WIDTH) + 300;
+  while (distance > (segment % 2 === 0 ? PATTERN_FAR - PATTERN_NEAR : PATTERN_WIDTH)) {
+    distance -= segment % 2 === 0 ? PATTERN_FAR - PATTERN_NEAR : PATTERN_WIDTH;
+    segment = (segment + 1) % 4;
+  }
+  const [as, at] = corners[segment]!;
+  const [bs, bt] = corners[(segment + 1) % 4]!;
+  const fraction = distance / (segment % 2 === 0 ? PATTERN_FAR - PATTERN_NEAR : PATTERN_WIDTH);
+  const f = runwayForward();
+  const r = runwayRight();
+  const s = as + (bs - as) * fraction;
+  const t = at + (bt - at) * fraction;
+  const desiredYaw = Math.atan2(
+    -(THRESH_X + f.x * s + r.x * t - ship.x),
+    -(THRESH_Z + f.z * s + r.z * t - ship.z),
+  );
   const yawErr = wrapPi(desiredYaw - ship.yaw);
-  const altErr = 305 - ship.y;
+  const altErr = PATTERN_HEIGHT - ship.y;
   const spdErr = 46 - ship.tas;
   const bankTarget = clamp(yawErr * 0.85, -0.42, 0.42);
   const climb = clamp(altErr * 0.0035, -0.1, 0.14);

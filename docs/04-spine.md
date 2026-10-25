@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0–S3 done on local main — not pushed to origin.** Next: **S4.**
+Status: **S0–S4 done on local main — not pushed to origin.** Next: **S5.**
 
 ---
 
@@ -82,6 +82,11 @@ descriptions match the reduced model. S1, typecheck, and browser checks pass.
 ---
 
 ## S4 — A pattern, not an orbit
+
+**Status:** done. A 2,600 × 1,000 m left practice rectangle at 305 m AGL,
+with a 300 m lookahead. Three-minute input-only tick proves all five legs in
+order and a return upwind, within along −700..3,100 m and across −1,600..600 m;
+altitude loss remains below 500 ft. Aircraft coefficients are unchanged.
 
 **Harness:** Grok CLI.
 
