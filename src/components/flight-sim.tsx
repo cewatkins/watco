@@ -20,6 +20,7 @@ import {
   type Ship,
 } from "@/sim/fdm";
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
+import { radioCall } from "@/sim/radio";
 
 declare global {
   interface Window {
@@ -87,6 +88,8 @@ export function FlightSim() {
   const ballRef = useRef<HTMLDivElement>(null);
   const trafficRefEl = useRef<HTMLParagraphElement>(null);
   const stallRef = useRef<HTMLDivElement>(null);
+  const radioRef = useRef<HTMLParagraphElement>(null);
+  const trafficRadioRef = useRef<HTMLParagraphElement>(null);
 
   const keysRef = useRef(new Set<string>());
   const throttleRef = useRef(0);
@@ -110,6 +113,7 @@ export function FlightSim() {
     const timer = new THREE.Timer();
     let acc = 0;
     let stopped = false;
+    let radioElapsed = 1;
 
     const audio = { ctx: null as AudioContext | null, gain: null as GainNode | null, filter: null as BiquadFilterNode | null, stall: null as GainNode | null };
 
@@ -223,6 +227,7 @@ export function FlightSim() {
       if (stopped) return;
       timer.update();
       const delta = Math.min(timer.getDelta(), 0.25);
+      radioElapsed += delta;
       acc += delta;
       let steps = 0;
       const player = playerRef.current;
@@ -305,6 +310,11 @@ export function FlightSim() {
           ballRef.current.style.transform = `translateY(${pitchPx}px) rotate(${rollDeg}deg)`;
         }
         instrumentPanelRef.current?.update(player);
+        if (radioElapsed >= 1) {
+          radioElapsed = 0;
+          if (radioRef.current) radioRef.current.textContent = radioCall(player);
+          if (trafficRadioRef.current) trafficRadioRef.current.textContent = radioCall(traffic);
+        }
         if (stallRef.current) stallRef.current.hidden = !player.stalled;
         if (hintRef.current) {
           let hint = "";
@@ -401,6 +411,13 @@ export function FlightSim() {
     <main className="relative h-dvh w-full overflow-hidden bg-bg text-fg">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none" />
       <InstrumentPanel ref={instrumentPanelRef} />
+      {phase === "fly" && (
+        <details className="absolute top-40 left-3 z-10 max-w-72 rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60">
+          <summary className="min-h-8 cursor-pointer font-mono text-primary">Practice radio · text only</summary>
+          <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
+          <p ref={trafficRadioRef} className="mt-2 text-muted">{radioCall(trafficRef.current)}</p>
+        </details>
+      )}
 
       <header className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-3 sm:p-4">
         <div className="pointer-events-auto rounded-md border border-border bg-bg/80 px-3 py-2 backdrop-blur-sm">
