@@ -41,8 +41,8 @@ plan document.
 
 When assigned cockpit work, follow
 [the shared cockpit view plan](../quests/cockpit-view-plan.md). It is
-implementation guidance only: S2 must be complete before Q-panel starts, and
-Q-views follows only after Q-panel passes. The supplied image and web research
+the completed design/verification record: S2, Q-panel, and Q-views have passed
+locally. Preserve that order for future changes. The supplied image and web research
 inform a procedural recreation; they are not assets to copy into the app.
 
 ## Done

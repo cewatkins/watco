@@ -101,6 +101,28 @@
   background: var(--color-primary);
 }
 
+.cockpit-trim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-inline: 0.75rem solid var(--color-border);
+  border-top: 0.5rem solid var(--color-bg);
+}
+.cockpit-deck {
+  position: absolute;
+  bottom: 0;
+  left: -1rem;
+  right: -1rem;
+  height: 26.5rem;
+  border-top: 0.75rem solid var(--color-bg);
+  border-radius: 45% 45% 0 0 / 1.75rem 1.75rem 0 0;
+  background: var(--color-surface);
+  box-shadow: 0 -0.5rem 1.25rem var(--color-bg);
+}
+@media (min-width: 640px) {
+  .cockpit-deck { height: 28rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ai-ball { transition: none; }
 }

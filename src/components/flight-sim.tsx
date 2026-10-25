@@ -41,6 +41,7 @@ declare global {
       getCameraMode: () => CamMode;
       getShipSnapshot: () => Ship | null;
       getRemoteShips: () => Ship[];
+      getTrafficSnapshot: () => Ship | null;
       setKeys: (codes: string[]) => void;
       prepRollTest: () => void;
     };
@@ -221,6 +222,7 @@ export function FlightSim() {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.repeat) return;
       keysRef.current.add(e.code);
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
@@ -247,7 +249,9 @@ export function FlightSim() {
       trafficRef.current = createTraffic();
       throttleRef.current = 0;
       flapsRef.current = 0;
-      touch.current.owned = false;
+      touch.current = { ail: 0, ele: 0, owned: false, lever: 0 };
+      brakeTouch.current = false;
+      keysRef.current.clear();
       if (phaseRef.current === "crash") {
         phaseRef.current = "fly";
         setPhase("fly");
@@ -267,6 +271,7 @@ export function FlightSim() {
         return player ? { ...player } : null;
       },
       getRemoteShips: () => presenceRef.current?.ships() ?? [],
+      getTrafficSnapshot: () => trafficRef.current ? { ...trafficRef.current } : null,
       setKeys: (codes) => {
         keysRef.current = new Set(codes);
       },
@@ -412,7 +417,7 @@ export function FlightSim() {
           audio.filter.frequency.setTargetAtTime(hz, audio.ctx.currentTime, 0.05);
           const vol = phaseRef.current === "brief" ? 0.0001 : 0.008 + rpmPower * 0.072;
           audio.gain.gain.setTargetAtTime(vol, audio.ctx.currentTime, 0.08);
-          audio.stall.gain.setTargetAtTime(player.stalled ? 0.03 : 0, audio.ctx.currentTime, 0.05);
+          audio.stall.gain.setTargetAtTime(phaseRef.current === "fly" && player.stalled ? 0.03 : 0, audio.ctx.currentTime, 0.05);
         }
         presenceRef.current?.publish(player, latestInput);
         world.render(player, traffic, delta, camRef.current, weatherRef.current, presenceRef.current?.ships());
@@ -461,6 +466,8 @@ export function FlightSim() {
     throttleRef.current = 0;
     flapsRef.current = 0;
     keysRef.current.clear();
+    touch.current = { ail: 0, ele: 0, owned: false, lever: 0 };
+    brakeTouch.current = false;
     sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
     phaseRef.current = "fly";
     setPhase("fly");
@@ -475,6 +482,8 @@ export function FlightSim() {
     throttleRef.current = 0;
     flapsRef.current = 0;
     touch.current = { ail: 0, ele: 0, owned: false, lever: 0 };
+    brakeTouch.current = false;
+    keysRef.current.clear();
     phaseRef.current = "fly";
     setPhase("fly");
   }
@@ -494,13 +503,13 @@ export function FlightSim() {
   }
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-bg text-fg">
+    <main data-cockpit={camLabel === "Cockpit" ? "true" : "false"} className="relative h-dvh w-full overflow-hidden bg-bg text-fg">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none" />
+      {camLabel === "Cockpit" && <div aria-hidden="true" className="cockpit-trim"><div className="cockpit-deck" /></div>}
       <InstrumentPanel ref={instrumentPanelRef} />
       {phase === "fly" && (
-        <details className="absolute top-40 left-3 z-10 max-h-64 max-w-72 overflow-y-auto rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60">
-          <summary className="min-h-8 cursor-pointer font-mono text-primary">Radio & local map</summary>
-          <p ref={taskRef} className="mb-2 font-mono text-primary">0/6 · Next: Takeoff</p>
+        <details className="absolute top-44 left-3 z-10 max-h-56 max-w-72 overflow-y-auto rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60 sm:max-h-80">
+          <summary className="sticky top-0 min-h-11 cursor-pointer bg-bg font-mono text-primary">Radio & local map</summary>
           <p className="mb-2 text-muted">Takeoff → crosswind → downwind → base → final → full stop on strip.</p>
           <p className="text-muted">Practice radio · text only, not transmitted</p>
           <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
@@ -528,6 +537,7 @@ export function FlightSim() {
           <p className="text-xs text-muted">
             RWY {RWY_HDG / 10} · wind {weatherLabel(WEATHER_OPTIONS[weatherIndex]!.weather)} · {FIELD_ELEV_FT.toLocaleString("en-US")} ft
           </p>
+          {phase === "fly" && <p ref={taskRef} className="mt-1 font-mono text-xs text-primary">0/6 · Next: Takeoff</p>}
           {phase !== "brief" && failure !== "none" && (
             <p className="mt-1 font-mono text-[10px] tracking-widest text-primary">
               FAULT · {FAILURE_OPTIONS.find((option) => option.value === failure)?.label}
@@ -553,7 +563,7 @@ export function FlightSim() {
           <button
             type="button"
             onClick={cycleCam}
-            className="mt-1 inline-flex items-center gap-1 text-xs text-primary"
+            className="mt-1 inline-flex min-h-11 items-center gap-1 text-xs text-primary"
           >
             <Camera className="size-3.5" aria-hidden />
             {camLabel}

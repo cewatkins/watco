@@ -16,8 +16,9 @@ You are the lead pilot, the student, or both. The harness does not outrank you. 
 ## Cockpit work
 
 Use [the shared cockpit view plan](../quests/cockpit-view-plan.md) as the
-handoff source for every harness. It is intentionally not an authorization to
-start coding: S2 is now complete locally. Open Q-panel and Q-views in order.
+handoff source for every harness. S2, Q-panel, and Q-views are complete locally,
+as are S3–S8 and all eight written side quests. Do not reopen completed work.
+The AI-student run was explicitly approved to work through that sequence.
 Assign one writer per quest, even if a second harness could work on a different
 file; the panel and camera meet in the same scene.
 
@@ -28,7 +29,9 @@ third-party cockpit art, logos, or branded aircraft names to the product.
 ## While it works
 
 - If it edits a file outside `Touches`, stop it.
-- If it wants to add accounts, a room server, a second `step`, or a downloaded airplane, stop it and point at `docs/07-trainwrecks.md`.
+- If it wants to add accounts, authoritative room physics, a second `step`, or
+  a downloaded airplane, stop it and point at `docs/07-trainwrecks.md`. S8's
+  explicitly approved encrypted signaling mailbox is not a physics server.
 - If it "finishes" without running the test, it is not finished. Ask it to run the test. If it cannot, the chapter is not done.
 
 ## At the commit point

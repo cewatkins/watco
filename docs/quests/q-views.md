@@ -54,3 +54,6 @@ cycle while preserving the original chase/tower/left-wing order. Cockpit view
 uses the aircraft basis and keeps the existing six-pack overlay; spot view
 frames the aircraft from outside. Camera-cycle checks confirm no `Ship` fields
 change when switching views, and chase still banks left with `A`.
+
+Integration polish adds a procedural windscreen rim and curved glareshield
+behind that same panel, not a second instrument set or licensed cabin model.

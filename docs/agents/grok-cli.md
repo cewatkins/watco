@@ -11,9 +11,9 @@ You do one chapter that fits in a sitting. You edit, you run the test, you write
 Typical chapters: S1, S3, S4, S6, S7, Q-panel, Q-sound, Q-failures, Q-radio, Q-map, Q-night, P3's loader (after a manifest exists), P6.
 
 For cockpit work, read [the shared plan](../quests/cockpit-view-plan.md) and
-implement only the quest named in the brief. Q-panel is a prerequisite for the
-cockpit camera; do not combine or start either quest until S2 is complete and
-the human has opened it. Keep every instrument display derived from `Ship` and
+implement only the quest named in the brief. S2, Q-panel, and Q-views are now
+complete locally; their prerequisite order remains part of the record.
+Keep every instrument display derived from `Ship` and
 keep camera changes out of the flight model.
 
 ## Before editing

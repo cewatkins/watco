@@ -8,7 +8,8 @@ OpenCode, and Copilot. It does not override `AGENTS.project.md`, a quest's
 
 ## Current state and gate
 
-- `docs/04-spine.md` has S2 complete; Q-panel and Q-views have merged.
+- `docs/04-spine.md` has S0–S8 complete locally; Q-panel and Q-views are committed,
+  not pushed.
 - `docs/03-where-we-are.md` now describes the six-pack and five camera modes.
 - `src/sim/fdm.ts` already puts the basic instrument values on `Ship`, including
   IAS, altitude, vertical speed, heading, pitch, roll, and roll rate.
@@ -22,13 +23,15 @@ verification record for those two quests.
 Add an optional pilot-seat view to Field 28's existing 172-class trainer. The
 runway and scenery remain visible through the windscreen. A dark, curved
 glareshield and instrument panel occupy the lower part of the view; the six
-primary analog instruments sit in front of the pilot, with a modest radio
-stack to the right and a yoke low in the foreground. Existing exterior views
-remain available.
+primary analog instruments sit in front of the pilot. Existing exterior views
+remain available. The implemented scope is a procedural windshield rim,
+glareshield, seat camera, and the shared six-pack/text overlay. The original
+radio-stack and desktop-yoke composition was given up rather than drawing
+nonfunctional equipment. Mobile keeps the existing working touch yoke.
 
 The visual target is the composition of the supplied screenshot, not a pixel
-copy: outside horizon above, dense analog panel below, radio equipment on the
-right. The product remains Field 28's generic trainer. Do not put manufacturer
+copy: outside horizon above, analog panel below. Practice radio text is in a
+disclosure, not a simulated navigation radio. The product remains Field 28's generic trainer. Do not put manufacturer
 names, logos, or aircraft marks in app copy or art.
 
 ## Reference research
@@ -52,14 +55,13 @@ any future use.
 
 1. Draw a conventional six-pack in the instrument panel:
    - Top row: airspeed, attitude, altimeter.
-   - Bottom row: turn coordinator with optional slip/skid ball, heading,
+   - Bottom row: roll-rate turn trend (no slip/skid ball), heading,
      vertical speed.
 2. Drive displays only from the current `Ship` passed to the renderer:
    - Airspeed from `iasKt`.
    - Attitude from `pitch` and `roll`.
    - Altitude from `altFt`.
-   - Turn trend from the existing angular state, and optionally slip from
-     velocity expressed through the existing body basis.
+   - Turn trend from the existing roll rate; no invented turn/slip physics.
    - Heading from `heading`.
    - Vertical speed from `vsiFpm`.
 3. Keep the existing text readouts as a backup. Do not add a second instrument
@@ -86,7 +88,7 @@ any future use.
 4. The cockpit camera must show the same Q-panel widgets produced by Q-panel.
    Do not build a separate DOM panel with different values.
 
-## Proposed implementation sequence
+## Completed implementation sequence
 
 1. **Prerequisite:** verify S2 and its regression test are complete on the
    working branch. If not, stop without touching flight or cockpit files.
@@ -131,6 +133,15 @@ any future use.
   becomes necessary. It must return a source and license manifest before a
   coding harness uses that asset. This plan currently calls for no downloaded
   assets and no new network request at runtime.
+
+  ## Final integration acceptance
+
+  Run the reproducible commands in [Where we are](../03-where-we-are.md).
+  The browser check cycles all five cameras while comparing the unchanged
+  `Ship`, tests A-left/D-right, captures desktop/mobile cockpit and spot views,
+  and checks offline flight. Six-pack targets have deterministic unit tests.
+  Cockpit decoration never writes flight state. Full radio avionics and a
+  modeled cabin remain outside this completed scope.
 
 ## Explicitly out of scope
 

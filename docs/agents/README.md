@@ -20,6 +20,9 @@ crosses seams. Pick one writer for a chapter; do not run coding harnesses in
 parallel against the same files.
 
 For the cockpit work, all roles share
-[the cockpit view plan](../quests/cockpit-view-plan.md). It is a plan, not an
-open quest: implementation must wait until its S2 prerequisite is complete and
-the human opens the relevant quest.
+[the cockpit view record](../quests/cockpit-view-plan.md). S2, Q-panel, and
+Q-views are complete locally. Do not reopen or rebuild them from an old plan.
+Current status and reproducible checks are in
+[Where we are](../03-where-we-are.md). The approved AI-student run covered S2–S8
+and the eight written quests sequentially; it did not authorize Public World
+or future unwritten quests.
