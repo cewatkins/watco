@@ -25,6 +25,7 @@ import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
 import { radioCall } from "@/sim/radio";
 import { FieldMap, type FieldMapHandle } from "./field-map";
 import { CIRCUIT_TASKS, newCircuit, scoreCircuit } from "@/sim/circuit";
+import { readFlightLog, appendFlight, forgetFlights, type FlightRecord, type LandingKind } from "@/sim/log";
 
 declare global {
   interface Window {
@@ -115,6 +116,32 @@ export function FlightSim() {
   const mapRef = useRef<FieldMapHandle>(null);
   const circuitRef = useRef(newCircuit());
   const taskRef = useRef<HTMLParagraphElement>(null);
+  const [flightLog, setFlightLog] = useState<FlightRecord[]>([]);
+  const [logError, setLogError] = useState("");
+  const sessionRef = useRef<{
+    startedAt: string; airborneSeconds: number; maxAltitudeFt: number;
+    wasAirborne: boolean; ended: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    try { setFlightLog(readFlightLog(localStorage)); }
+    catch (error) { setLogError(`Local log unavailable: ${error instanceof Error ? error.message : String(error)}`); }
+  }, []);
+
+  function finishFlight(kind: LandingKind) {
+    const session = sessionRef.current;
+    if (!session || session.ended) return;
+    session.ended = true;
+    try {
+      setFlightLog(appendFlight(localStorage, {
+        startedAt: session.startedAt, airborneSeconds: session.airborneSeconds,
+        maxAltitudeFt: session.maxAltitudeFt, landingKind: kind,
+      }));
+      setLogError("");
+    } catch (error) {
+      setLogError(`Flight was not saved: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -203,6 +230,8 @@ export function FlightSim() {
     const onBlur = () => keysRef.current.clear();
 
     function resetShip() {
+      finishFlight("reset");
+      sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
       circuitRef.current = newCircuit();
       playerRef.current = createPlayer();
       trafficRef.current = createTraffic();
@@ -297,6 +326,16 @@ export function FlightSim() {
               failure: failureRef.current,
             }, FIXED_DT, weatherRef.current);
             circuitRef.current = scoreCircuit(circuitRef.current, player);
+            const session = sessionRef.current;
+            if (session && !session.ended) {
+              session.maxAltitudeFt = Math.max(session.maxAltitudeFt, player.altFt);
+              if (!player.onGround) {
+                session.wasAirborne = true;
+                session.airborneSeconds += FIXED_DT;
+              }
+              if (player.crashed) finishFlight("crash");
+              else if (session.wasAirborne && player.onGround && Math.hypot(player.vx, player.vz) < 1) finishFlight("full stop");
+            }
             if (player.crashed) {
               phaseRef.current = "crash";
               setCrashReason(player.crashReason || "Wreck");
@@ -403,11 +442,20 @@ export function FlightSim() {
   }, []);
 
   function start() {
+    circuitRef.current = newCircuit();
+    playerRef.current = createPlayer();
+    trafficRef.current = createTraffic();
+    throttleRef.current = 0;
+    flapsRef.current = 0;
+    keysRef.current.clear();
+    sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
     phaseRef.current = "fly";
     setPhase("fly");
   }
 
   function resetFromCrash() {
+    finishFlight("reset");
+    sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
     circuitRef.current = newCircuit();
     playerRef.current = createPlayer();
     trafficRef.current = createTraffic();
@@ -445,6 +493,17 @@ export function FlightSim() {
           <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
           <p ref={trafficRadioRef} className="mt-2 text-muted">{radioCall(trafficRef.current)}</p>
           <FieldMap ref={mapRef} />
+          <button
+            type="button"
+            className="mt-2 min-h-11 text-primary"
+            onClick={() => {
+              finishFlight("reset");
+              keysRef.current.clear();
+              phaseRef.current = "brief";
+              setPhase("brief");
+            }}
+          >End flight / briefing</button>
+          {logError && <p role="alert" className="text-danger">{logError}</p>}
         </details>
       )}
 
@@ -678,6 +737,23 @@ export function FlightSim() {
               <dt className="text-muted">Space · C · R</dt>
               <dd>Brake · camera · reset</dd>
             </dl>
+            <details className="mt-3 text-xs">
+              <summary className="min-h-8 cursor-pointer text-primary">Local flight log · {flightLog.length} flights</summary>
+              <p className="text-muted">This browser only; no accounts or sync. Last five:</p>
+              {flightLog.length === 0 && <p className="mt-2 text-muted">No saved flights.</p>}
+              <ol className="mt-2 space-y-2">
+                {flightLog.slice(-5).reverse().map((record, index) => (
+                  <li key={`${record.startedAt}-${index}`} className="text-fg">
+                    {record.startedAt.slice(0, 16).replace("T", " ")} UTC · {record.landingKind} · {Math.round(record.airborneSeconds)} s airborne · max {Math.round(record.maxAltitudeFt)} ft MSL
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className="mt-2 min-h-11 text-danger" onClick={() => {
+                try { forgetFlights(localStorage); setFlightLog([]); setLogError(""); }
+                catch (error) { setLogError(`Could not forget log: ${error instanceof Error ? error.message : String(error)}`); }
+              }}>Forget local flight log</button>
+            </details>
+            {logError && <p role="alert" className="mt-2 text-xs text-danger">{logError}</p>}
             <button
               type="button"
               onClick={start}

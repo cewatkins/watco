@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0–S6 done on local main — not pushed to origin.** Next: **S7.**
+Status: **S0–S7 done on local main — not pushed to origin.** Next: **S8.**
 
 ---
 
@@ -152,6 +152,11 @@ object. Calm/default/crosswind choices appear before start. No METAR fetch.
 ---
 
 ## S7 — A log on this machine
+
+**Status:** done. Bounded 50-record local log, last five on briefing, local
+forget action, explicit storage/corruption errors. Records stop/crash/reset
+once per flight. Browser checks confirm refresh persistence and separate-context
+isolation. No positions, accounts, database, or network persistence.
 
 **Harness:** Grok CLI.
 
