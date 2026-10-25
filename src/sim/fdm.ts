@@ -134,6 +134,29 @@ const _windYaw = headingToYaw(WIND_FROM_DEG);
 export const WIND_X = Math.sin(_windYaw) * _windSpeed;
 export const WIND_Z = Math.cos(_windYaw) * _windSpeed;
 
+export type Weather = {
+  windX: number;
+  windZ: number;
+  fieldElevationM: number;
+  densityAltitudeOffsetM: number;
+  gustAmplitude: number;
+};
+export const DEFAULT_WEATHER: Readonly<Weather> = {
+  windX: WIND_X, windZ: WIND_Z, fieldElevationM: FIELD_ELEV_M,
+  densityAltitudeOffsetM: 0, gustAmplitude: 0,
+};
+export function windAt(weather: Readonly<Weather>, x: number, z: number) {
+  // A deterministic spatial gust, not a second clock or a random force.
+  const gust = weather.gustAmplitude * Math.sin(x / 180 + z / 230);
+  return { x: weather.windX + gust, z: weather.windZ + gust * 0.5 };
+}
+export function weatherLabel(weather: Readonly<Weather>) {
+  const knots = Math.hypot(weather.windX, weather.windZ) / 0.514444;
+  if (knots < 0.05) return "calm";
+  const from = (Math.atan2(weather.windX, weather.windZ) * 180 / Math.PI + 360) % 360;
+  return `${String(Math.round(from) || 360).padStart(3, "0")}/${String(Math.round(knots)).padStart(2, "0")} kt`;
+}
+
 function rodrigues(v: V3, axis: V3, ang: number): V3 {
   const c = Math.cos(ang);
   const s = Math.sin(ang);
@@ -181,8 +204,8 @@ export function runwayCenter(): V3 {
   };
 }
 
-export function rhoAt(agl: number): number {
-  return 1.225 * Math.exp(-(FIELD_ELEV_M + Math.max(0, agl)) / 8500);
+export function rhoAt(agl: number, weather: Readonly<Weather> = DEFAULT_WEATHER): number {
+  return 1.225 * Math.exp(-(weather.fieldElevationM + weather.densityAltitudeOffsetM + Math.max(0, agl)) / 8500);
 }
 
 function flapCL(flaps: Flaps): number {
@@ -307,12 +330,12 @@ export const IDLE_INPUT: PilotInput = {
   flaps: 0,
 };
 
-function refreshInstruments(ship: Ship, tas: number, rho: number, alpha: number, stalled: boolean) {
+function refreshInstruments(ship: Ship, tas: number, rho: number, alpha: number, stalled: boolean, weather: Readonly<Weather>) {
   const ias = tas * Math.sqrt(rho / 1.225);
   ship.tas = tas;
   ship.tasKt = tas * 1.943844;
   ship.iasKt = ias * 1.943844;
-  ship.altFt = (FIELD_ELEV_M + ship.y) * 3.28084;
+  ship.altFt = (weather.fieldElevationM + ship.y) * 3.28084;
   ship.aglFt = ship.y * 3.28084;
   ship.vsiFpm = ship.vy * 196.8504;
   ship.heading = yawToHeading(ship.yaw);
@@ -324,16 +347,17 @@ function refreshInstruments(ship: Ship, tas: number, rho: number, alpha: number,
  * One fixed step. `dt` must be FIXED_DT (the loop accumulates).
  * Returns nothing; mutates the ship. Deterministic for a given input stream.
  */
-export function step(ship: Ship, input: PilotInput, dt: number): void {
+export function step(ship: Ship, input: PilotInput, dt: number, weather: Readonly<Weather> = DEFAULT_WEATHER): void {
   if (ship.crashed) return;
 
   const lever = clamp(input.throttle, 0, 1);
   ship.throttle += (lever - ship.throttle) * Math.min(1, dt * 3.2);
 
-  const rho = rhoAt(ship.y);
-  const ax = ship.vx - WIND_X;
+  const rho = rhoAt(ship.y, weather);
+  const wind = windAt(weather, ship.x, ship.z);
+  const ax = ship.vx - wind.x;
   const ay = ship.vy;
-  const az = ship.vz - WIND_Z;
+  const az = ship.vz - wind.z;
   const tas = Math.hypot(ax, ay, az);
   const { f, u } = basis(ship.yaw, ship.pitch, ship.roll);
 
@@ -436,7 +460,7 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
             ? "Prop strike"
             : "Hard landing";
       ship.onGround = true;
-      refreshInstruments(ship, tas, rho, alpha, false);
+      refreshInstruments(ship, tas, rho, alpha, false, weather);
       return;
     }
     ship.onGround = true;
@@ -476,7 +500,7 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
     ship.pitch += ship.pitchRate * dt;
     ship.pitch = clamp(ship.pitch, -0.42, 0.4);
 
-    const velYaw = Math.atan2(-(ship.vx - WIND_X), -(ship.vz - WIND_Z));
+    const velYaw = Math.atan2(-(ship.vx - wind.x), -(ship.vz - wind.z));
     const yawErr = wrapPi(velYaw - ship.yaw);
     ship.yaw += (yawErr * 1.7 + rud * 0.5 * authority) * dt;
 
@@ -485,7 +509,7 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
 
   const rpmTarget = 620 + ship.throttle * 1780;
   ship.rpm += (rpmTarget - ship.rpm) * Math.min(1, dt * 1.6);
-  refreshInstruments(ship, Math.hypot(ship.vx - WIND_X, ship.vy, ship.vz - WIND_Z), rho, alpha, stalled);
+  refreshInstruments(ship, Math.hypot(ship.vx - wind.x, ship.vy, ship.vz - wind.z), rho, alpha, stalled, weather);
 }
 
 /** Look ahead along the rectangle; only controls, never aircraft position. */

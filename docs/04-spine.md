@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0–S5 done on local main — not pushed to origin.** Next: **S6.**
+Status: **S0–S6 done on local main — not pushed to origin.** Next: **S7.**
 
 ---
 
@@ -127,6 +127,11 @@ the strip in about four simulated minutes. Flying away cannot complete it.
 ---
 
 ## S6 — Weather is an argument
+
+**Status:** done. Optional `Weather` argument defaults byte-for-byte to S1;
+wind vector, field elevation, density-altitude offset, and deterministic spatial
+gust amplitude feed the same model. The windsock reads `windAt` from that
+object. Calm/default/crosswind choices appear before start. No METAR fetch.
 
 **Harness:** Grok CLI. This is the gate. Public World does not start before this commit is on main.
 

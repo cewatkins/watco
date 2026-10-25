@@ -8,8 +8,10 @@ import {
   RWY_HDG,
   RWY_LENGTH,
   RWY_WIDTH,
-  WIND_FROM_DEG,
-  WIND_KT,
+  DEFAULT_WEATHER,
+  weatherLabel,
+  runwayRight,
+  type Weather,
   createPlayer,
   createTraffic,
   patternPilot,
@@ -52,6 +54,12 @@ const FAILURE_OPTIONS: { value: FlightFailure; label: string; detail: string }[]
   { value: "partial-power", label: "Partial power", detail: "Maximum thrust capped at 55%." },
   { value: "heavy-wing", label: "Heavy wing", detail: "Small left-roll tendency; counter with aileron." },
 ];
+const crosswind = runwayRight();
+const WEATHER_OPTIONS: { label: string; weather: Readonly<Weather> }[] = [
+  { label: "Default · 280/08", weather: DEFAULT_WEATHER },
+  { label: "Calm", weather: { ...DEFAULT_WEATHER, windX: 0, windZ: 0 } },
+  { label: "Crosswind · from left, 8 kt", weather: { ...DEFAULT_WEATHER, windX: crosswind.x * 4.115552, windZ: crosswind.z * 4.115552 } },
+];
 
 function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v));
@@ -78,6 +86,8 @@ export function FlightSim() {
   const [camLabel, setCamLabel] = useState<string>(CAM_LABEL.chase);
   const [night, setNight] = useState(false);
   const worldRef = useRef<FlightWorld | null>(null);
+  const [weatherIndex, setWeatherIndex] = useState(0);
+  const weatherRef = useRef<Readonly<Weather>>(DEFAULT_WEATHER);
 
   const iasRef = useRef<HTMLSpanElement>(null);
   const altRef = useRef<HTMLSpanElement>(null);
@@ -285,7 +295,7 @@ export function FlightSim() {
               brake,
               flaps: flapsRef.current,
               failure: failureRef.current,
-            }, FIXED_DT);
+            }, FIXED_DT, weatherRef.current);
             circuitRef.current = scoreCircuit(circuitRef.current, player);
             if (player.crashed) {
               phaseRef.current = "crash";
@@ -293,7 +303,7 @@ export function FlightSim() {
               setPhase("crash");
             }
           }
-          step(traffic, patternPilot(traffic), FIXED_DT);
+          step(traffic, patternPilot(traffic), FIXED_DT, weatherRef.current);
           if (traffic.crashed || traffic.y > 2500 || Math.hypot(traffic.x, traffic.z) > 8000) {
             trafficRef.current = createTraffic();
           }
@@ -353,7 +363,7 @@ export function FlightSim() {
           audio.gain.gain.setTargetAtTime(vol, audio.ctx.currentTime, 0.08);
           audio.stall.gain.setTargetAtTime(player.stalled ? 0.03 : 0, audio.ctx.currentTime, 0.05);
         }
-        world.render(player, traffic, delta, camRef.current);
+        world.render(player, traffic, delta, camRef.current, weatherRef.current);
       }
     };
     const id = { current: 0 };
@@ -443,7 +453,7 @@ export function FlightSim() {
           <p className="font-mono text-xs tracking-widest text-primary">FIELD 28</p>
           <p className="font-mono text-sm text-fg">N172FD</p>
           <p className="text-xs text-muted">
-            RWY {RWY_HDG / 10} · wind {WIND_FROM_DEG}/{String(WIND_KT).padStart(2, "0")} · {FIELD_ELEV_FT.toLocaleString("en-US")} ft
+            RWY {RWY_HDG / 10} · wind {weatherLabel(WEATHER_OPTIONS[weatherIndex]!.weather)} · {FIELD_ELEV_FT.toLocaleString("en-US")} ft
           </p>
           {phase !== "brief" && failure !== "none" && (
             <p className="mt-1 font-mono text-[10px] tracking-widest text-primary">
@@ -607,10 +617,24 @@ export function FlightSim() {
             </p>
             <ul className="mt-3 space-y-1 text-xs leading-relaxed text-muted">
               <li>Runway {RWY_HDG / 10}: {RWY_LENGTH.toLocaleString("en-US")} × {RWY_WIDTH} m; field elevation {FIELD_ELEV_FT.toLocaleString("en-US")} ft.</li>
-              <li>Wind from {WIND_FROM_DEG}° at {WIND_KT} kt. Full throttle, then pull to rotate once speed builds.</li>
+              <li>Wind: {weatherLabel(WEATHER_OPTIONS[weatherIndex]!.weather)}. Full throttle, then pull to rotate once speed builds.</li>
               <li>Flaps add lift and drag; extend for slower approaches, retract for a clean climb.</li>
               <li>N344TG flies an altitude-hold left practice circuit, not a landing approach.</li>
             </ul>
+            <label className="mt-3 block text-xs text-muted">
+              Weather
+              <select
+                className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-2 text-fg"
+                value={weatherIndex}
+                onChange={event => {
+                  const index = Number(event.target.value);
+                  weatherRef.current = WEATHER_OPTIONS[index]!.weather;
+                  setWeatherIndex(index);
+                }}
+              >
+                {WEATHER_OPTIONS.map((option, index) => <option key={option.label} value={index}>{option.label}</option>)}
+              </select>
+            </label>
             <fieldset className="mt-4">
               <legend className="font-mono text-xs tracking-widest text-muted">AIRCRAFT CONDITION</legend>
               <div className="mt-2 grid gap-2">

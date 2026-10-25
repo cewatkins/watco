@@ -15,7 +15,7 @@ rudder yaws left.
 
 ## Ownership
 
-`step(ship, input, dt)` in `src/sim/fdm.ts` is the sole flight-state
+`step(ship, input, dt, weather = DEFAULT_WEATHER)` in `src/sim/fdm.ts` is the sole flight-state
 integrator. It is the only function that continuously advances position,
 velocity, attitude, rates, engine state, and derived instrument fields.
 `patternPilot(ship)` returns inputs only; the player loop and traffic loop both
@@ -41,6 +41,11 @@ function and reads ship values to draw the aircraft, instruments, and cameras.
 accumulator, and the calls to `step`; it does not compute lift, drag, thrust,
 acceleration, or a second altitude/energy model. There is no force-shaped
 flight math outside `src/sim/fdm.ts`.
+
+Weather carries wind velocity in m/s, field elevation and density-altitude
+offset in meters, and gust amplitude in m/s. Gusts are deterministic spatial
+variations from `windAt(weather, x, z)`, not a second simulation clock. Both
+airplanes and the windsock read the same object; default zero gust preserves S1.
 
 If a display needs a value not already on `Ship`, add and derive it in the
 flight model only when it is genuinely part of the model contract. Do not

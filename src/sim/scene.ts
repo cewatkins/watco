@@ -12,13 +12,16 @@ import {
   runwayForward,
   runwayRight,
   type Ship,
+  DEFAULT_WEATHER,
+  windAt,
+  type Weather,
 } from "./fdm";
 
 export type CamMode = "chase" | "tower" | "wing" | "spot" | "cockpit";
 
 export type FlightWorld = {
   setNight: (night: boolean) => void;
-  render: (player: Ship, traffic: Ship, dt: number, cam: CamMode) => void;
+  render: (player: Ship, traffic: Ship, dt: number, cam: CamMode, weather?: Readonly<Weather>) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -498,8 +501,13 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
     (blob.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.32 - ship.y / 240);
   }
 
-  function render(player: Ship, traffic: Ship, dt: number, cam: CamMode) {
+  function render(player: Ship, traffic: Ship, dt: number, cam: CamMode, weather: Readonly<Weather> = DEFAULT_WEATHER) {
     elapsed += dt;
+    const wind = windAt(weather, sockBase, sockBaseZ);
+    const windSpeed = Math.hypot(wind.x, wind.z);
+    sock.position.set(sockBase + wind.x / Math.max(windSpeed, 1) * 1.3, 7.6, sockBaseZ + wind.z / Math.max(windSpeed, 1) * 1.3);
+    if (windSpeed > 0.05) sock.lookAt(sock.position.x + wind.x, sock.position.y, sock.position.z + wind.z);
+    else sock.lookAt(sock.position.x, sock.position.y - 1, sock.position.z);
     if (cam !== lastCam) {
       camReady = false;
       lastCam = cam;
