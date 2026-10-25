@@ -47,6 +47,9 @@ poll. The route rejects malformed/oversized payloads and excessive signals.
 Local preview uses the existing process-local PGLite fallback. A deployed
 Vercel app without a real database returns an explicit 503 instead of claiming
 live presence works on isolated temporary stores. Solo flight still works.
+The Nitro build traces the whole PGLite package so its WASM/data assets stay
+beside the externalized module; otherwise the built local preview can exit
+during database bootstrap even while dev works.
 
 ## Verification
 
@@ -55,3 +58,7 @@ WebRTC channel. The receiving browser saw a non-autopilot aircraft climb and
 bank from the sending browser's controls; departure removed it. Blocking
 network after hydration did not prevent solo throttle/movement. Packet guards,
 wrong-room encryption rejection, S1/S4/S5 and weather regressions pass.
+`npm run test:flight-browser -- http://127.0.0.1:8081/ --live` repeats this on
+the built output, including typed room-code entry without flight shortcuts.
+Malformed query/JSON/message requests return 400; oversized requests return
+413 on both the dev and built mailbox routes.
