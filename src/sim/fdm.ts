@@ -153,7 +153,7 @@ export function windAt(weather: Readonly<Weather>, x: number, z: number) {
 export function weatherLabel(weather: Readonly<Weather>) {
   const knots = Math.hypot(weather.windX, weather.windZ) / 0.514444;
   if (knots < 0.05) return "calm";
-  const from = (Math.atan2(weather.windX, weather.windZ) * 180 / Math.PI + 360) % 360;
+  const from = (Math.atan2(-weather.windX, weather.windZ) * 180 / Math.PI + 360) % 360;
   return `${String(Math.round(from) || 360).padStart(3, "0")}/${String(Math.round(knots)).padStart(2, "0")} kt`;
 }
 

@@ -1,8 +1,10 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { DEFAULT_WEATHER, createPlayer, step, FIXED_DT, IDLE_INPUT, runwayRight, windAt, rhoAt } from "./fdm.ts";
+import { DEFAULT_WEATHER, createPlayer, step, FIXED_DT, IDLE_INPUT, runwayRight, windAt, rhoAt, weatherLabel } from "./fdm.ts";
 
 test("S6: explicit default/zero gust exactly matches implicit baseline", () => {
+  assert.equal(weatherLabel(DEFAULT_WEATHER), "280/08 kt");
+  assert.equal(weatherLabel({ ...DEFAULT_WEATHER, windX: 0, windZ: 0 }), "calm");
   const a = createPlayer(), b = createPlayer();
   for (let i = 0; i < 3600; i++) {
     const input = { ...IDLE_INPUT, throttle: 1, elevator: 0.3 };
