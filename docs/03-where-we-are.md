@@ -11,6 +11,8 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
 - Hear a synthesized engine whose pitch and volume follow RPM, a flap click on
   flap changes, and a stall tone when the wing quits. Sound starts after the
   first click.
+- Read a procedural six-pack driven by the same airplane state as the text
+  backup row.
 - Watch N344TG hold a left orbit at about 1,000 ft above the field.
 - Crash on a wing strike, a prop strike, or a hard landing, then reset (`R`).
 - Fly with keys, a gamepad, or the phone yoke.
@@ -79,7 +81,11 @@ React owns the frame clock and the DOM. It accumulates time and calls `step` in 
 
 Phases: `brief`, `fly`, `crash`.
 
-The panel is a set of text readouts (IAS, altitude, vertical speed, heading, RPM, throttle, flaps) plus an attitude ball driven by roll and pitch. Refs, not React state, on purpose: the instruments must not re-render the page at 60 Hz.
+The six-pack is a procedural SVG presentation of `Ship`: airspeed, attitude,
+altitude, turn trend, heading, and vertical speed. The text row remains the
+exact-value backup, with RPM, throttle, and flaps. Refs, not React state, on
+purpose: the instruments update in the existing render loop without a 60 Hz
+page re-render.
 
 `window.__controlsTest` exposes `getYaw`, `getSpeed`, `getRoll`, `setKeys`, and `prepRollTest` so a browser check can fly the airplane without a human. Leave it. A chapter that removes it has to replace the check, not just the window object.
 

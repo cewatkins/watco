@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Camera, Plane, RotateCcw } from "lucide-react";
 import * as THREE from "three";
+import { InstrumentPanel, type InstrumentPanelHandle } from "./instrument-panel";
 import {
   FIXED_DT,
   createPlayer,
@@ -83,6 +84,7 @@ export function FlightSim() {
   const camRef = useRef<CamMode>("chase");
   const stickId = useRef<number | null>(null);
   const flapClickRef = useRef<(() => void) | null>(null);
+  const instrumentPanelRef = useRef<InstrumentPanelHandle>(null);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -284,6 +286,7 @@ export function FlightSim() {
           const rollDeg = (-player.roll * 180) / Math.PI;
           ballRef.current.style.transform = `translateY(${pitchPx}px) rotate(${rollDeg}deg)`;
         }
+        instrumentPanelRef.current?.update(player);
         if (stallRef.current) stallRef.current.hidden = !player.stalled;
         if (hintRef.current) {
           let hint = "";
@@ -378,6 +381,7 @@ export function FlightSim() {
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-bg text-fg">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none" />
+      <InstrumentPanel ref={instrumentPanelRef} />
 
       <header className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-3 sm:p-4">
         <div className="pointer-events-auto rounded-md border border-border bg-bg/80 px-3 py-2 backdrop-blur-sm">

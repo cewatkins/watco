@@ -8,6 +8,8 @@
 @theme {
   --font-sans: "IBM Plex Sans", "Liberation Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "Liberation Mono", ui-monospace, monospace;
+  --text-instrument: 0.625rem;
+  --text-instrument--line-height: 0.875rem;
   --color-bg: #1c1916;
   --color-surface: #2a261f;
   --color-fg: #f3efe4;
