@@ -21,6 +21,7 @@ import {
 } from "@/sim/fdm";
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
 import { radioCall } from "@/sim/radio";
+import { FieldMap, type FieldMapHandle } from "./field-map";
 
 declare global {
   interface Window {
@@ -100,6 +101,7 @@ export function FlightSim() {
   const stickId = useRef<number | null>(null);
   const flapClickRef = useRef<(() => void) | null>(null);
   const instrumentPanelRef = useRef<InstrumentPanelHandle>(null);
+  const mapRef = useRef<FieldMapHandle>(null);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -310,6 +312,7 @@ export function FlightSim() {
           ballRef.current.style.transform = `translateY(${pitchPx}px) rotate(${rollDeg}deg)`;
         }
         instrumentPanelRef.current?.update(player);
+        mapRef.current?.update(player, traffic);
         if (radioElapsed >= 1) {
           radioElapsed = 0;
           if (radioRef.current) radioRef.current.textContent = radioCall(player);
@@ -412,10 +415,12 @@ export function FlightSim() {
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none" />
       <InstrumentPanel ref={instrumentPanelRef} />
       {phase === "fly" && (
-        <details className="absolute top-40 left-3 z-10 max-w-72 rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60">
-          <summary className="min-h-8 cursor-pointer font-mono text-primary">Practice radio · text only</summary>
+        <details className="absolute top-40 left-3 z-10 max-h-64 max-w-72 overflow-y-auto rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60">
+          <summary className="min-h-8 cursor-pointer font-mono text-primary">Radio & local map</summary>
+          <p className="text-muted">Practice radio · text only, not transmitted</p>
           <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
           <p ref={trafficRadioRef} className="mt-2 text-muted">{radioCall(trafficRef.current)}</p>
+          <FieldMap ref={mapRef} />
         </details>
       )}
 
@@ -469,7 +474,7 @@ export function FlightSim() {
 
       <p
         ref={hintRef}
-        className="pointer-events-none absolute top-44 right-4 left-4 text-center font-mono text-xs text-fg sm:top-auto sm:bottom-36"
+        className="pointer-events-none absolute right-4 bottom-36 left-4 hidden text-center font-mono text-xs text-fg sm:block"
       />
 
       <section className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2 sm:justify-center sm:p-4">
