@@ -14,6 +14,9 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
 - Watch N344TG hold a left orbit at about 1,000 ft above the field.
 - Crash on a wing strike, a prop strike, or a hard landing, then reset (`R`).
 - Fly with keys, a gamepad, or the phone yoke.
+- Choose a healthy trainer, partial power capped at 55% thrust, or a small
+  left-roll tendency before start. Failures are off by default and affect only
+  the player aircraft.
 
 The briefing on the page already says the important sentence: you send inputs, the flight model owns the state, and the same model steps both airplanes.
 

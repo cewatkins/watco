@@ -40,6 +40,8 @@ export const MASS = 1043; // kg — handbook, rounded: 172-class gross weight
 export const WING_AREA = 16.2; // m² — handbook, rounded: 174 ft² on the sheet
 export const LIFT_SLOPE = 5.0; // per rad — tuning: linear slope held to trim the stall
 export const CL0 = 0.2; // tuning: zero-lift lift at the model's level trim attitude
+export const PARTIAL_POWER_MAX_THROTTLE = 0.55; // failure tuning: thrust stops at 55% of available power
+export const HEAVY_WING_ROLL_ACCEL = 0.04; // rad/s² — failure tuning: small persistent left-roll moment
 export const STALL_ALPHA_CLEAN = 0.26; // rad — tuning: stall angle of attack, clean
 export const STALL_ALPHA_FLAPS = 0.3; // rad — tuning: stall angle with flaps, at the same slope
 export const FLAP_CL: Partial<Record<Flaps, number>> = { 10: 0.22, 20: 0.4, 30: 0.55 }; // tuning: lift increment per flap notch
@@ -61,6 +63,8 @@ export const WIND_KT = 8;
 
 export type Flaps = 0 | 10 | 20 | 30;
 
+export type FlightFailure = "none" | "partial-power" | "heavy-wing";
+
 export type PilotInput = {
   aileron: number;
   elevator: number;
@@ -68,6 +72,7 @@ export type PilotInput = {
   throttle: number;
   brake: number;
   flaps: Flaps;
+  failure?: FlightFailure;
 };
 
 export type Ship = {
@@ -315,7 +320,11 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
   const q = 0.5 * rho * tas * tas;
   const lift = q * WING_AREA * cl;
   const drag = q * WING_AREA * cd;
-  const thrust = ship.throttle * THRUST_MAX * (1 - THRUST_LAPSE * Math.min(tas, 85) / 85);
+  const thrustLapse = 1 - THRUST_LAPSE * Math.min(tas, 85) / 85;
+  const thrustBase = ship.throttle * THRUST_MAX * thrustLapse;
+  const thrust = input.failure === "partial-power"
+    ? Math.min(thrustBase, PARTIAL_POWER_MAX_THROTTLE * THRUST_MAX * thrustLapse)
+    : thrustBase;
 
   let lx = u.x;
   let ly = u.y;
@@ -422,6 +431,7 @@ export function step(ship: Ship, input: PilotInput, dt: number): void {
     const handsOff = Math.abs(ail) < 0.08 ? 0.4 : 0;
     const rollTarget = ail * 1.05 * (0.45 + 0.55 * authority) - ship.roll * handsOff;
     ship.rollRate += (rollTarget - ship.rollRate) * Math.min(1, dt * 4);
+    if (input.failure === "heavy-wing") ship.rollRate += HEAVY_WING_ROLL_ACCEL * dt;
     ship.roll += ship.rollRate * dt;
     ship.roll = clamp(ship.roll, -1.05, 1.05);
 

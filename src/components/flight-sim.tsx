@@ -9,6 +9,7 @@ import {
   placeAirborne,
   step,
   type Flaps,
+  type FlightFailure,
   type Ship,
 } from "@/sim/fdm";
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
@@ -32,6 +33,11 @@ const CAM_LABEL: Record<CamMode, string> = {
   tower: "Tower",
   wing: "Left wing",
 };
+const FAILURE_OPTIONS: { value: FlightFailure; label: string; detail: string }[] = [
+  { value: "none", label: "None", detail: "Standard trainer; no failures." },
+  { value: "partial-power", label: "Partial power", detail: "Maximum thrust capped at 55%." },
+  { value: "heavy-wing", label: "Heavy wing", detail: "Small left-roll tendency; counter with aileron." },
+];
 
 function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v));
@@ -52,6 +58,8 @@ export function FlightSim() {
 
   const [phase, setPhase] = useState<Phase>("brief");
   const phaseRef = useRef<Phase>("brief");
+  const [failure, setFailure] = useState<FlightFailure>("none");
+  const failureRef = useRef<FlightFailure>("none");
   const [crashReason, setCrashReason] = useState("");
   const [camLabel, setCamLabel] = useState<string>(CAM_LABEL.chase);
 
@@ -245,6 +253,7 @@ export function FlightSim() {
               throttle: throttleRef.current,
               brake,
               flaps: flapsRef.current,
+              failure: failureRef.current,
             }, FIXED_DT);
             if (player.crashed) {
               phaseRef.current = "crash";
@@ -375,6 +384,11 @@ export function FlightSim() {
           <p className="font-mono text-xs tracking-widest text-primary">FIELD 28</p>
           <p className="font-mono text-sm text-fg">N172FD</p>
           <p className="text-xs text-muted">RWY 28 · wind 280/08 · 2,871 ft</p>
+          {phase !== "brief" && failure !== "none" && (
+            <p className="mt-1 font-mono text-[10px] tracking-widest text-primary">
+              FAULT · {FAILURE_OPTIONS.find((option) => option.value === failure)?.label}
+            </p>
+          )}
         </div>
         <div className="pointer-events-auto rounded-md border border-border bg-bg/80 px-3 py-2 text-right backdrop-blur-sm">
           <p className="text-xs tracking-wide text-muted">TRAFFIC</p>
@@ -518,6 +532,35 @@ export function FlightSim() {
             <p className="mt-2 text-sm leading-relaxed text-muted">
               C172-class trainer on runway 28 at a Boise-elevation field. One flight model steps both your airplane and the pattern ship. You send it inputs. It owns the state.
             </p>
+            <fieldset className="mt-4">
+              <legend className="font-mono text-xs tracking-widest text-muted">AIRCRAFT CONDITION</legend>
+              <div className="mt-2 grid gap-2">
+                {FAILURE_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    htmlFor={`failure-${option.value}`}
+                    className="flex cursor-pointer items-start gap-2 rounded-md border border-border px-3 py-2"
+                  >
+                    <input
+                      id={`failure-${option.value}`}
+                      type="radio"
+                      name="flight-failure"
+                      value={option.value}
+                      checked={failure === option.value}
+                      onChange={() => {
+                        failureRef.current = option.value;
+                        setFailure(option.value);
+                      }}
+                      className="mt-1 accent-primary"
+                    />
+                    <span>
+                      <span className="block text-sm text-fg">{option.label}</span>
+                      <span className="block text-xs text-muted">{option.detail}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-fg">
               <dt className="text-muted">W / S</dt>
               <dd>Throttle up / down</dd>
