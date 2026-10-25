@@ -14,6 +14,7 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
   first click.
 - Read a procedural six-pack driven by the same airplane state as the text
   backup row.
+- Toggle day/night lighting, with procedural runway edge lights at night.
 - Watch N344TG hold a left orbit at about 1,000 ft above the field.
 - Crash on a wing strike, a prop strike, or a hard landing, then reset (`R`).
 - Fly with keys, a gamepad, or the phone yoke.

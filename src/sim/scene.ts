@@ -17,6 +17,7 @@ import {
 export type CamMode = "chase" | "tower" | "wing" | "spot" | "cockpit";
 
 export type FlightWorld = {
+  setNight: (night: boolean) => void;
   render: (player: Ship, traffic: Ship, dt: number, cam: CamMode) => void;
   resize: () => void;
   dispose: () => void;
@@ -264,8 +265,9 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
 
   const camera = new THREE.PerspectiveCamera(52, 1, 0.25, 14000);
 
-  scene.add(new THREE.HemisphereLight("#e7f1f8", "#c2a36a", 1.05));
-  scene.add(new THREE.AmbientLight("#fff6e8", 0.38));
+  const skyLight = new THREE.HemisphereLight("#e7f1f8", "#c2a36a", 1.05);
+  const ambient = new THREE.AmbientLight("#fff6e8", 0.38);
+  scene.add(skyLight, ambient);
   const sun = new THREE.DirectionalLight("#fff0d0", 2.6);
   sun.position.set(-420, 640, 280);
   scene.add(sun);
@@ -316,6 +318,32 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
   rwy.position.set(THRESH_X, 0, THRESH_Z);
   rwy.receiveShadow = true;
   scene.add(rwy);
+
+  const edgeLights = new THREE.Group();
+  const lampGeometry = new THREE.SphereGeometry(0.6, 6, 4);
+  const lampMaterial = new THREE.MeshBasicMaterial({ color: "#fff0c0" });
+  for (let distance = 0; distance <= RWY_LENGTH; distance += 60) {
+    for (const side of [-1, 1]) {
+      const lamp = new THREE.Mesh(lampGeometry, lampMaterial);
+      lamp.position.set(
+        THRESH_X + f.x * distance + r.x * side * (RWY_WIDTH / 2 + 2),
+        0.65,
+        THRESH_Z + f.z * distance + r.z * side * (RWY_WIDTH / 2 + 2),
+      );
+      edgeLights.add(lamp);
+    }
+  }
+  edgeLights.visible = false;
+  scene.add(edgeLights);
+
+  function setNight(night: boolean) {
+    scene.background = new THREE.Color(night ? "#0b1528" : "#9ec4d6");
+    scene.fog = new THREE.Fog(night ? "#142239" : "#d5ddd6", 1400, 9000);
+    skyLight.intensity = night ? 0.35 : 1.05;
+    ambient.intensity = night ? 0.18 : 0.38;
+    sun.intensity = night ? 0.15 : 2.6;
+    edgeLights.visible = night;
+  }
 
   const taxi = new THREE.Mesh(
     new THREE.BoxGeometry(18, 0.16, 220),
@@ -568,5 +596,5 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
   }
 
   resize();
-  return { render, resize, dispose };
+  return { render, resize, dispose, setNight };
 }

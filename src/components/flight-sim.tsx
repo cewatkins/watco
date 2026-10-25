@@ -67,6 +67,8 @@ export function FlightSim() {
   const failureRef = useRef<FlightFailure>("none");
   const [crashReason, setCrashReason] = useState("");
   const [camLabel, setCamLabel] = useState<string>(CAM_LABEL.chase);
+  const [night, setNight] = useState(false);
+  const worldRef = useRef<FlightWorld | null>(null);
 
   const iasRef = useRef<HTMLSpanElement>(null);
   const altRef = useRef<HTMLSpanElement>(null);
@@ -98,6 +100,7 @@ export function FlightSim() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const world: FlightWorld = mountWorld(canvas);
+    worldRef.current = world;
     const timer = new THREE.Timer();
     let acc = 0;
     let stopped = false;
@@ -353,6 +356,7 @@ export function FlightSim() {
       if (window.__controlsTest) delete window.__controlsTest;
       flapClickRef.current = null;
       world.dispose();
+      worldRef.current = null;
       void audio.ctx?.close();
     };
     // mount once
@@ -404,6 +408,17 @@ export function FlightSim() {
           )}
         </div>
         <div className="pointer-events-auto rounded-md border border-border bg-bg/80 px-3 py-2 text-right backdrop-blur-sm">
+          <button
+            type="button"
+            aria-pressed={night}
+            onClick={() => {
+              worldRef.current?.setNight(!night);
+              setNight(!night);
+            }}
+            className="min-h-11 px-2 text-xs text-primary"
+          >
+            {night ? "Night" : "Day"} lighting
+          </button>
           <p className="text-xs tracking-wide text-muted">TRAFFIC</p>
           <p ref={trafficRefEl} className="font-mono text-sm text-fg">
             N344TG
@@ -429,7 +444,7 @@ export function FlightSim() {
 
       <p
         ref={hintRef}
-        className="pointer-events-none absolute top-28 right-4 left-4 text-center font-mono text-xs text-fg sm:top-auto sm:bottom-36"
+        className="pointer-events-none absolute top-44 right-4 left-4 text-center font-mono text-xs text-fg sm:top-auto sm:bottom-36"
       />
 
       <section className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2 sm:justify-center sm:p-4">
