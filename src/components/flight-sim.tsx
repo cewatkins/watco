@@ -21,6 +21,8 @@ declare global {
       getYaw: () => number;
       getSpeed: () => number;
       getRoll: () => number;
+      getCameraMode: () => CamMode;
+      getShipSnapshot: () => Ship | null;
       setKeys: (codes: string[]) => void;
       prepRollTest: () => void;
     };
@@ -28,11 +30,13 @@ declare global {
 }
 
 const FLAP_STEPS: Flaps[] = [0, 10, 20, 30];
-const CAMS: CamMode[] = ["chase", "tower", "wing"];
+const CAMS: CamMode[] = ["chase", "tower", "wing", "spot", "cockpit"];
 const CAM_LABEL: Record<CamMode, string> = {
   chase: "Chase",
   tower: "Tower",
   wing: "Left wing",
+  spot: "Spot",
+  cockpit: "Cockpit",
 };
 const FAILURE_OPTIONS: { value: FlightFailure; label: string; detail: string }[] = [
   { value: "none", label: "None", detail: "Standard trainer; no failures." },
@@ -189,6 +193,11 @@ export function FlightSim() {
         return p ? Math.hypot(p.vx, p.vz) : 0;
       },
       getRoll: () => playerRef.current?.roll ?? 0,
+      getCameraMode: () => camRef.current,
+      getShipSnapshot: () => {
+        const player = playerRef.current;
+        return player ? { ...player } : null;
+      },
       setKeys: (codes) => {
         keysRef.current = new Set(codes);
       },

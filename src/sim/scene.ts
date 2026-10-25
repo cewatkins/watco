@@ -14,7 +14,7 @@ import {
   type Ship,
 } from "./fdm";
 
-export type CamMode = "chase" | "tower" | "wing";
+export type CamMode = "chase" | "tower" | "wing" | "spot" | "cockpit";
 
 export type FlightWorld = {
   render: (player: Ship, traffic: Ship, dt: number, cam: CamMode) => void;
@@ -452,6 +452,7 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
   scene.add(blobA, blobB);
 
   let camReady = false;
+  let lastCam: CamMode | null = null;
   let elapsed = 0;
 
   function resize() {
@@ -471,6 +472,12 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
 
   function render(player: Ship, traffic: Ship, dt: number, cam: CamMode) {
     elapsed += dt;
+    if (cam !== lastCam) {
+      camReady = false;
+      lastCam = cam;
+    }
+    playerCraft.group.visible = cam !== "cockpit";
+    blobA.visible = cam !== "cockpit";
     applyAttitude(playerCraft.group, player);
     applyAttitude(trafficCraft.group, traffic);
     playerCraft.prop.rotation.z += (player.rpm / 60) * Math.PI * 2 * dt;
@@ -486,11 +493,28 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
     if (_fwd.lengthSq() < 1e-4) _fwd.set(0, 0, -1);
     _fwd.normalize();
 
-    if (cam === "tower") {
+    if (cam === "cockpit") {
+      camera.position.set(
+        player.x + b.f.x * 0.55 + b.u.x * 1.05,
+        player.y + b.f.y * 0.55 + b.u.y * 1.05,
+        player.z + b.f.z * 0.55 + b.u.z * 1.05,
+      );
+      camera.up.set(b.u.x, b.u.y, b.u.z);
+      _look.set(
+        camera.position.x + b.f.x * 100,
+        camera.position.y + b.f.y * 100,
+        camera.position.z + b.f.z * 100,
+      );
+      camReady = true;
+    } else if (cam === "tower") {
+      camera.up.set(0, 1, 0);
       _desired.set(center.x + r.x * 260, 28, center.z + r.z * 260);
       _look.set(player.x, player.y + 2, player.z);
-      camera.position.lerp(_desired, 1 - Math.exp(-2 * dt));
+      if (!camReady) camera.position.copy(_desired);
+      else camera.position.lerp(_desired, 1 - Math.exp(-2 * dt));
+      camReady = true;
     } else if (cam === "wing") {
+      camera.up.set(0, 1, 0);
       _desired.set(
         player.x - b.r.x * 7 + b.u.x * 1.4 - _fwd.x * 1.5,
         player.y - b.r.y * 7 + b.u.y * 1.4 + 1.4,
@@ -498,17 +522,34 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
       );
       _look.set(player.x + _fwd.x * 40, player.y + 1, player.z + _fwd.z * 40);
       camera.position.copy(_desired);
+      camReady = true;
+    } else if (cam === "spot") {
+      camera.up.set(0, 1, 0);
+      _desired.set(
+        player.x - b.f.x * 20 + b.r.x * 15 + b.u.x * 8,
+        player.y - b.f.y * 20 + b.r.y * 15 + b.u.y * 8,
+        player.z - b.f.z * 20 + b.r.z * 15 + b.u.z * 8,
+      );
+      _look.set(
+        player.x - b.u.x * 5,
+        player.y - b.u.y * 5,
+        player.z - b.u.z * 5,
+      );
+      if (!camReady) camera.position.copy(_desired);
+      else camera.position.lerp(_desired, 1 - Math.exp(-3.2 * dt));
+      camReady = true;
     } else {
+      camera.up.set(0, 1, 0);
       _desired.set(player.x - _fwd.x * 18, player.y + 6.4, player.z - _fwd.z * 18);
       _look.set(player.x, player.y + 1.1, player.z);
       if (!camReady) {
         camera.position.copy(_desired);
-        camReady = true;
       } else {
         camera.position.lerp(_desired, 1 - Math.exp(-3.2 * dt));
       }
+      camReady = true;
     }
-    if (camera.position.y < 1.6) camera.position.y = 1.6;
+    if (cam !== "cockpit" && camera.position.y < 1.6) camera.position.y = 1.6;
     camera.lookAt(_look);
 
     renderer.render(scene, camera);

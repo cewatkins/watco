@@ -1,6 +1,6 @@
 # Cockpit view — cross-harness implementation plan
 
-Status: **Proposed. Planning only; no code quest is open.**
+Status: **Implemented through Q-panel and Q-views (2026-10-25).**
 
 This document is the shared handoff for the human lead pilot, Grok CLI,
 OpenCode, and Copilot. It does not override `AGENTS.project.md`, a quest's
@@ -8,17 +8,14 @@ OpenCode, and Copilot. It does not override `AGENTS.project.md`, a quest's
 
 ## Current state and gate
 
-- `docs/04-spine.md` says S1 is done and S2 is next. Q-panel hangs from S2.
-- `docs/03-where-we-are.md` describes a text instrument row and an attitude
-  ball; the existing cameras are chase, tower, and left wing.
+- `docs/04-spine.md` has S2 complete; Q-panel and Q-views have merged.
+- `docs/03-where-we-are.md` now describes the six-pack and five camera modes.
 - `src/sim/fdm.ts` already puts the basic instrument values on `Ship`, including
   IAS, altitude, vertical speed, heading, pitch, roll, and roll rate.
 - Q-views explicitly depends on Q-panel for its cockpit camera.
 
-**Do not implement this plan yet.** First finish S2 and its acceptance test on
-main. Then the human lead pilot opens Q-panel as its own quest; after that
-acceptance passes, open Q-views. Do not mark either quest done from a rendered
-mockup or a plan.
+Q-panel and Q-views are complete. Keep this document as the design and
+verification record for those two quests.
 
 ## Product goal
 

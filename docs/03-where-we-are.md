@@ -7,7 +7,8 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
 ## What you can do in the page
 
 - Sit on runway 28 at a high-elevation field. The placard reads **2,871 ft**, wind **280 at 8**.
-- Fly N172FD, a 172-class trainer. Chase, tower, and left-wing cameras (`C`).
+- Fly N172FD, a 172-class trainer. Chase, tower, left-wing, spot, and cockpit
+  cameras (`C`).
 - Hear a synthesized engine whose pitch and volume follow RPM, a flap click on
   flap changes, and a stall tone when the wing quits. Sound starts after the
   first click.
@@ -71,7 +72,7 @@ Three.js. Builds a procedural trainer (high wing, prop, beacon, stripe color per
 
 `mountWorld(canvas)` returns `render(player, traffic, dt, cam)`. Attitude comes from `basis()` in the flight model, the same function the forces use. If the picture and the forces ever disagree about "left", this shared basis is why. Keep it that way.
 
-Cameras: `chase`, `tower`, `wing`.
+Cameras: `chase`, `tower`, `wing`, `spot`, `cockpit`.
 
 Nothing in this file may add a force, a new velocity, or a second notion of altitude.
 
@@ -87,7 +88,11 @@ exact-value backup, with RPM, throttle, and flaps. Refs, not React state, on
 purpose: the instruments update in the existing render loop without a 60 Hz
 page re-render.
 
-`window.__controlsTest` exposes `getYaw`, `getSpeed`, `getRoll`, `setKeys`, and `prepRollTest` so a browser check can fly the airplane without a human. Leave it. A chapter that removes it has to replace the check, not just the window object.
+`window.__controlsTest` exposes `getYaw`, `getSpeed`, `getRoll`,
+`getCameraMode`, `getShipSnapshot`, `setKeys`, and `prepRollTest` so a browser
+check can fly the airplane without a human and verify camera behavior. Leave
+it. A chapter that removes it has to replace the check, not just the window
+object.
 
 ## What is deliberately absent
 
@@ -101,7 +106,7 @@ page re-render.
 | Real terrain, real airports, METAR | Public World, after S6 |
 | JSBSim | Named in the briefing as later. The reduced model stays the one that flies until P5 **compares** against it. It is not deleted |
 | Downloaded sounds or textures | Engine and stall are oscillators and noise. Keep it that way unless a quest says otherwise |
-| A cockpit you can sit in | Cameras are outside the cabin. Q-views, and only after the panel quest, or the cockpit is an empty box |
+| A cockpit you can sit in | Added in Q-views as a camera seat with the procedural panel overlay, not a full cabin model |
 
 ## A known stamp, not a mystery
 
