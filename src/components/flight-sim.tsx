@@ -22,6 +22,7 @@ import {
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
 import { radioCall } from "@/sim/radio";
 import { FieldMap, type FieldMapHandle } from "./field-map";
+import { CIRCUIT_TASKS, newCircuit, scoreCircuit } from "@/sim/circuit";
 
 declare global {
   interface Window {
@@ -102,6 +103,8 @@ export function FlightSim() {
   const flapClickRef = useRef<(() => void) | null>(null);
   const instrumentPanelRef = useRef<InstrumentPanelHandle>(null);
   const mapRef = useRef<FieldMapHandle>(null);
+  const circuitRef = useRef(newCircuit());
+  const taskRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -190,6 +193,7 @@ export function FlightSim() {
     const onBlur = () => keysRef.current.clear();
 
     function resetShip() {
+      circuitRef.current = newCircuit();
       playerRef.current = createPlayer();
       trafficRef.current = createTraffic();
       throttleRef.current = 0;
@@ -282,6 +286,7 @@ export function FlightSim() {
               flaps: flapsRef.current,
               failure: failureRef.current,
             }, FIXED_DT);
+            circuitRef.current = scoreCircuit(circuitRef.current, player);
             if (player.crashed) {
               phaseRef.current = "crash";
               setCrashReason(player.crashReason || "Wreck");
@@ -313,6 +318,12 @@ export function FlightSim() {
         }
         instrumentPanelRef.current?.update(player);
         mapRef.current?.update(player, traffic);
+        if (taskRef.current) {
+          const progress = circuitRef.current;
+          taskRef.current.textContent = progress.failed ? "Circuit ended · reset to retry"
+            : progress.completed === CIRCUIT_TASKS.length ? "Circuit complete · full stop on runway"
+            : `${progress.completed}/${CIRCUIT_TASKS.length} · Next: ${CIRCUIT_TASKS[progress.completed]}`;
+        }
         if (radioElapsed >= 1) {
           radioElapsed = 0;
           if (radioRef.current) radioRef.current.textContent = radioCall(player);
@@ -387,6 +398,7 @@ export function FlightSim() {
   }
 
   function resetFromCrash() {
+    circuitRef.current = newCircuit();
     playerRef.current = createPlayer();
     trafficRef.current = createTraffic();
     throttleRef.current = 0;
@@ -417,6 +429,8 @@ export function FlightSim() {
       {phase === "fly" && (
         <details className="absolute top-40 left-3 z-10 max-h-64 max-w-72 overflow-y-auto rounded-md border border-border bg-bg/90 p-2 text-xs text-fg sm:top-4 sm:left-60">
           <summary className="min-h-8 cursor-pointer font-mono text-primary">Radio & local map</summary>
+          <p ref={taskRef} className="mb-2 font-mono text-primary">0/6 · Next: Takeoff</p>
+          <p className="mb-2 text-muted">Takeoff → crosswind → downwind → base → final → full stop on strip.</p>
           <p className="text-muted">Practice radio · text only, not transmitted</p>
           <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
           <p ref={trafficRadioRef} className="mt-2 text-muted">{radioCall(trafficRef.current)}</p>
