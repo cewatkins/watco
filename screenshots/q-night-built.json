@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 985,
+      "bodyTextHash": "40fe433e32c1d4f9eece988e28a6cbaf35ed44dba23fc4e4803f347ef034e94b",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-night-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 985,
+      "bodyTextHash": "40fe433e32c1d4f9eece988e28a6cbaf35ed44dba23fc4e4803f347ef034e94b",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-night-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/q-night-built.json"
+}

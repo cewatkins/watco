@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 808,
+      "bodyTextHash": "bde18a46b7cb2164e3756957dc2a86082617ea0f77bdd4a7f3456834d776ee59",
+      "bodyTextPrefix": "FIELD 28 N172FD RWY 28 · wind 280/08 · 2,871 ft TRAFFIC N344TG C",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-failures-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 808,
+      "bodyTextHash": "bde18a46b7cb2164e3756957dc2a86082617ea0f77bdd4a7f3456834d776ee59",
+      "bodyTextPrefix": "FIELD 28 N172FD RWY 28 · wind 280/08 · 2,871 ft TRAFFIC N344TG C",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-failures-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/q-failures-built.json"
+}

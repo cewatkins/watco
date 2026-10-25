@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 1384,
+      "bodyTextHash": "0a872a20e3d7fef8cf70eb6e5d58180c7285ce161545b85142911e2c0c7de4a7",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/flight-final-dev.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 1384,
+      "bodyTextHash": "0a872a20e3d7fef8cf70eb6e5d58180c7285ce161545b85142911e2c0c7de4a7",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/flight-final-dev-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/flight-final-dev.json"
+}

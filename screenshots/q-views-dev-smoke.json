@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 972,
+      "bodyTextHash": "1477d3beeb47ea14f1fbfc7c7b8d606a2f6ea824877caeade3ee1821322886ff",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-views-dev-smoke.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Field 28",
+      "hasCanvas": true,
+      "bodyTextLen": 972,
+      "bodyTextHash": "1477d3beeb47ea14f1fbfc7c7b8d606a2f6ea824877caeade3ee1821322886ff",
+      "bodyTextPrefix": "Airspeed 0 40 80 120 160 -- Attitude -- Altimeter 0 1 2 3 4 5 6 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/q-views-dev-smoke-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/q-views-dev-smoke.json"
+}
