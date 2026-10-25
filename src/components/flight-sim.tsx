@@ -4,6 +4,12 @@ import * as THREE from "three";
 import { InstrumentPanel, type InstrumentPanelHandle } from "./instrument-panel";
 import {
   FIXED_DT,
+  FIELD_ELEV_FT,
+  RWY_HDG,
+  RWY_LENGTH,
+  RWY_WIDTH,
+  WIND_FROM_DEG,
+  WIND_KT,
   createPlayer,
   createTraffic,
   patternPilot,
@@ -305,7 +311,7 @@ export function FlightSim() {
           if (phaseRef.current === "fly" && player.onGround && player.iasKt < 50) hint = "Throttle with W. Steer with A and D.";
           else if (phaseRef.current === "fly" && player.onGround && player.iasKt >= 50) hint = "Rotate. Pull the nose up with the down arrow.";
           else if (player.stalled) hint = "Stall. Relax the back pressure. Wings level.";
-          else if (phaseRef.current === "fly" && !player.onGround) hint = "Left pattern is yours. N344TG is already in it.";
+          else if (phaseRef.current === "fly" && !player.onGround) hint = "Practice left turns. N344TG is flying an orbit.";
           hintRef.current.textContent = hint;
         }
         if (trafficRefEl.current) {
@@ -400,7 +406,9 @@ export function FlightSim() {
         <div className="pointer-events-auto rounded-md border border-border bg-bg/80 px-3 py-2 backdrop-blur-sm">
           <p className="font-mono text-xs tracking-widest text-primary">FIELD 28</p>
           <p className="font-mono text-sm text-fg">N172FD</p>
-          <p className="text-xs text-muted">RWY 28 · wind 280/08 · 2,871 ft</p>
+          <p className="text-xs text-muted">
+            RWY {RWY_HDG / 10} · wind {WIND_FROM_DEG}/{String(WIND_KT).padStart(2, "0")} · {FIELD_ELEV_FT.toLocaleString("en-US")} ft
+          </p>
           {phase !== "brief" && failure !== "none" && (
             <p className="mt-1 font-mono text-[10px] tracking-widest text-primary">
               FAULT · {FAILURE_OPTIONS.find((option) => option.value === failure)?.label}
@@ -550,16 +558,23 @@ export function FlightSim() {
       )}
 
       {phase === "brief" && (
-        <div className="absolute inset-0 z-20 flex items-end justify-center overflow-y-auto bg-bg/40 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-5 shadow-lg">
+        <div className="absolute inset-0 z-20 flex flex-col items-center overflow-y-auto bg-bg/40 p-4">
+          <div className="my-auto w-full max-w-md shrink-0 rounded-lg border border-border bg-surface p-5 shadow-lg">
             <div className="flex items-center gap-2 text-primary">
               <Plane className="size-4" aria-hidden />
               <p className="font-mono text-xs tracking-widest">PATTERN TRAINER</p>
             </div>
             <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-fg">Field 28</h1>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              C172-class trainer on runway 28 at a Boise-elevation field. One flight model steps both your airplane and the pattern ship. You send it inputs. It owns the state.
+              Generic 172-class trainer, N172FD. One flight model steps both airplanes.
+              You send it inputs. It owns the state. Fictional field, not a real airport.
             </p>
+            <ul className="mt-3 space-y-1 text-xs leading-relaxed text-muted">
+              <li>Runway {RWY_HDG / 10}: {RWY_LENGTH.toLocaleString("en-US")} × {RWY_WIDTH} m; field elevation {FIELD_ELEV_FT.toLocaleString("en-US")} ft.</li>
+              <li>Wind from {WIND_FROM_DEG}° at {WIND_KT} kt. Full throttle, then pull to rotate once speed builds.</li>
+              <li>Flaps add lift and drag; extend for slower approaches, retract for a clean climb.</li>
+              <li>N344TG flies an orbit near the field, not a rectangular pattern yet.</li>
+            </ul>
             <fieldset className="mt-4">
               <legend className="font-mono text-xs tracking-widest text-muted">AIRCRAFT CONDITION</legend>
               <div className="mt-2 grid gap-2">
@@ -611,7 +626,8 @@ export function FlightSim() {
               Start engines
             </button>
             <p className="mt-3 text-xs leading-relaxed text-muted">
-              Phase 0 proof. Not a Cessna product — that name belongs to Textron. Public 172 handbook numbers, reduced-order aero. JSBSim comes later, same file on both sides of the wire.
+              Reduced-order training demo, not certified flight instruction. Synthesized
+              audio starts with your first click. No mixture, carb heat, or navigation radio.
             </p>
           </div>
         </div>

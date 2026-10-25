@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0–S2 done on local main — not pushed to origin.** Next: **S3.**
+Status: **S0–S3 done on local main — not pushed to origin.** Next: **S4.**
 
 ---
 
@@ -62,6 +62,9 @@ units, fixed-step timing, and the rendering boundary.
 ---
 
 ## S3 — The briefing tells the truth
+
+**Status:** done. Card and placard read the model constants; rotate/flap/traffic
+descriptions match the reduced model. S1, typecheck, and browser checks pass.
 
 **Harness:** Grok CLI.
 
