@@ -8,7 +8,9 @@ This chapter is the map of the code a stranger needs before S1. If a file is not
 
 - Sit on runway 28 at a high-elevation field. The placard reads **2,871 ft**, wind **280 at 8**.
 - Fly N172FD, a 172-class trainer. Chase, tower, and left-wing cameras (`C`).
-- Hear a synthesized engine that follows the throttle. A stall tone when the wing quits.
+- Hear a synthesized engine whose pitch and volume follow RPM, a flap click on
+  flap changes, and a stall tone when the wing quits. Sound starts after the
+  first click.
 - Watch N344TG hold a left orbit at about 1,000 ft above the field.
 - Crash on a wing strike, a prop strike, or a hard landing, then reset (`R`).
 - Fly with keys, a gamepad, or the phone yoke.

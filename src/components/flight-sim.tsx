@@ -74,6 +74,7 @@ export function FlightSim() {
   const touch = useRef({ ail: 0, ele: 0, owned: false, lever: 0 });
   const camRef = useRef<CamMode>("chase");
   const stickId = useRef<number | null>(null);
+  const flapClickRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -124,19 +125,29 @@ export function FlightSim() {
       audio.stall = stall;
     }
 
+    flapClickRef.current = () => {
+      if (!audio.ctx || audio.ctx.state !== "running") return;
+      const now = audio.ctx.currentTime;
+      const click = audio.ctx.createOscillator();
+      const envelope = audio.ctx.createGain();
+      click.type = "triangle";
+      click.frequency.setValueAtTime(1200, now);
+      click.frequency.exponentialRampToValueAtTime(350, now + 0.04);
+      envelope.gain.setValueAtTime(0.04, now);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+      click.connect(envelope);
+      envelope.connect(audio.ctx.destination);
+      click.start(now);
+      click.stop(now + 0.05);
+    };
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       keysRef.current.add(e.code);
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
       if (phaseRef.current !== "fly") return;
-      if (e.code === "KeyF") {
-        const i = FLAP_STEPS.indexOf(flapsRef.current);
-        flapsRef.current = FLAP_STEPS[Math.min(FLAP_STEPS.length - 1, i + 1)] ?? 30;
-      }
-      if (e.code === "KeyG") {
-        const i = FLAP_STEPS.indexOf(flapsRef.current);
-        flapsRef.current = FLAP_STEPS[Math.max(0, i - 1)] ?? 0;
-      }
+      if (e.code === "KeyF") moreFlaps(1);
+      if (e.code === "KeyG") moreFlaps(-1);
       if (e.code === "KeyC") {
         const i = CAMS.indexOf(camRef.current);
         camRef.current = CAMS[(i + 1) % CAMS.length] ?? "chase";
@@ -281,9 +292,10 @@ export function FlightSim() {
           trafficRefEl.current.textContent = `N344TG  ${nm.toFixed(1)} nm  ${dAlt > 0 ? "+" : ""}${dAlt} ft`;
         }
         if (audio.gain && audio.filter && audio.stall && audio.ctx) {
-          const hz = 160 + player.rpm * 0.42;
+          const rpmPower = clamp((player.rpm - 620) / 1780, 0, 1);
+          const hz = 110 + player.rpm * 0.34;
           audio.filter.frequency.setTargetAtTime(hz, audio.ctx.currentTime, 0.05);
-          const vol = phaseRef.current === "brief" ? 0.0001 : 0.015 + throttleRef.current * 0.07;
+          const vol = phaseRef.current === "brief" ? 0.0001 : 0.008 + rpmPower * 0.072;
           audio.gain.gain.setTargetAtTime(vol, audio.ctx.currentTime, 0.08);
           audio.stall.gain.setTargetAtTime(player.stalled ? 0.03 : 0, audio.ctx.currentTime, 0.05);
         }
@@ -318,11 +330,11 @@ export function FlightSim() {
       ro.disconnect();
       canvas.parentElement?.removeEventListener("pointerdown", startAudio);
       if (window.__controlsTest) delete window.__controlsTest;
+      flapClickRef.current = null;
       world.dispose();
       void audio.ctx?.close();
     };
     // mount once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function start() {
@@ -348,7 +360,10 @@ export function FlightSim() {
 
   function moreFlaps(dir: number) {
     const i = FLAP_STEPS.indexOf(flapsRef.current);
-    flapsRef.current = FLAP_STEPS[clamp(i + dir, 0, FLAP_STEPS.length - 1)] ?? 0;
+    const next = FLAP_STEPS[clamp(i + dir, 0, FLAP_STEPS.length - 1)] ?? 0;
+    if (next === flapsRef.current) return;
+    flapsRef.current = next;
+    flapClickRef.current?.();
   }
 
   return (
