@@ -22,6 +22,8 @@ import {
   type FlightFailure,
   type Ship,
   type PilotInput,
+  AIRFRAMES,
+  type AirframeId,
 } from "@/sim/fdm";
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
 import { radioCall } from "@/sim/radio";
@@ -93,6 +95,8 @@ export function FlightSim() {
   const worldRef = useRef<FlightWorld | null>(null);
   const [weatherIndex, setWeatherIndex] = useState(0);
   const weatherRef = useRef<Readonly<Weather>>(DEFAULT_WEATHER);
+  const [airframeId, setAirframeId] = useState<AirframeId>("standard");
+  const airframeRef = useRef<AirframeId>("standard");
 
   const iasRef = useRef<HTMLSpanElement>(null);
   const altRef = useRef<HTMLSpanElement>(null);
@@ -239,7 +243,7 @@ export function FlightSim() {
       finishFlight("reset");
       sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
       circuitRef.current = newCircuit();
-      playerRef.current = createPlayer();
+      playerRef.current = createPlayer(AIRFRAMES[airframeRef.current]);
       trafficRef.current = createTraffic();
       throttleRef.current = 0;
       flapsRef.current = 0;
@@ -452,7 +456,7 @@ export function FlightSim() {
 
   function start() {
     circuitRef.current = newCircuit();
-    playerRef.current = createPlayer();
+    playerRef.current = createPlayer(AIRFRAMES[airframeRef.current]);
     trafficRef.current = createTraffic();
     throttleRef.current = 0;
     flapsRef.current = 0;
@@ -466,7 +470,7 @@ export function FlightSim() {
     finishFlight("reset");
     sessionRef.current = { startedAt: new Date().toISOString(), airborneSeconds: 0, maxAltitudeFt: FIELD_ELEV_FT, wasAirborne: false, ended: false };
     circuitRef.current = newCircuit();
-    playerRef.current = createPlayer();
+    playerRef.current = createPlayer(AIRFRAMES[airframeRef.current]);
     trafficRef.current = createTraffic();
     throttleRef.current = 0;
     flapsRef.current = 0;
@@ -681,7 +685,7 @@ export function FlightSim() {
             </div>
             <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-fg">Field 28</h1>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              Generic 172-class trainer, N172FD. One flight model steps both airplanes.
+              {airframeId === "standard" ? "Generic 172-class trainer" : "Generic light tailwheel-class trainer"}, N172FD. One flight model steps both airplanes.
               You send it inputs. It owns the state. Fictional field, not a real airport.
             </p>
             <ul className="mt-3 space-y-1 text-xs leading-relaxed text-muted">
@@ -690,6 +694,17 @@ export function FlightSim() {
               <li>Flaps add lift and drag; extend for slower approaches, retract for a clean climb.</li>
               <li>N344TG flies an altitude-hold left practice circuit, not a landing approach.</li>
             </ul>
+            <label className="mt-3 block text-xs text-muted">
+              Airframe
+              <select aria-label="Airframe" value={airframeId} className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-2 text-fg" onChange={event => {
+                const id = event.target.value;
+                if (id === "standard" || id === "light") { airframeRef.current = id; setAirframeId(id); }
+              }}>
+                <option value="standard">Standard trainer · {AIRFRAMES.standard.mass.toLocaleString("en-US")} kg</option>
+                <option value="light">Light trainer · {AIRFRAMES.light.mass.toLocaleString("en-US")} kg</option>
+              </select>
+            </label>
+            {airframeId === "light" && <p className="mt-1 text-xs text-muted">Generic tuning, not a specific aircraft. Shared procedural appearance and ground steering, not tailwheel handling.</p>}
             <label className="mt-3 block text-xs text-muted">
               Weather
               <select

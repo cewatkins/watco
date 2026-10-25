@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { createShip, type Ship, type PilotInput } from "./fdm.ts";
+import { AIRFRAMES, createShip, type Ship, type PilotInput } from "./fdm.ts";
 
 const finite = z.number().finite();
 const packetSchema = z.object({
   version: z.literal(1), sequence: z.number().int().nonnegative(),
   ship: z.object({
+    aero: z.object({ id: z.enum(["standard", "light"]) }),
     x: finite.min(-20000).max(20000), y: finite.min(0).max(10000), z: finite.min(-20000).max(20000),
     vx: finite.min(-500).max(500), vy: finite.min(-500).max(500), vz: finite.min(-500).max(500),
     yaw: finite, pitch: finite.min(-Math.PI).max(Math.PI), roll: finite.min(-Math.PI).max(Math.PI),
@@ -25,7 +26,7 @@ export function presencePacket(ship: Ship, input: PilotInput, sequence: number) 
 export function readPresence(value: unknown, peerId: string) {
   const parsed = packetSchema.safeParse(value);
   if (!parsed.success) throw new Error("Invalid aircraft presence packet");
-  return { sequence: parsed.data.sequence, input: parsed.data.input, ship: createShip({ ...parsed.data.ship, id: peerId, callsign: `Guest ${peerId.slice(0, 4)}` }) };
+  return { sequence: parsed.data.sequence, input: parsed.data.input, ship: createShip({ ...parsed.data.ship, aero: AIRFRAMES[parsed.data.ship.aero.id], id: peerId, callsign: `Guest ${peerId.slice(0, 4)}` }) };
 }
 
 const toHex = (data: Uint8Array) => [...data].map(x => x.toString(16).padStart(2, "0")).join("");

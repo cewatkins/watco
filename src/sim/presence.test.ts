@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { createPlayer, step, IDLE_INPUT, FIXED_DT } from "./fdm.ts";
+import { createPlayer, step, IDLE_INPUT, FIXED_DT, LIGHT_AERO } from "./fdm.ts";
 import { roomCodec, presencePacket, readPresence } from "./presence.ts";
 
 test("S8: stepped aircraft and controls survive validation; malicious packets rejected", () => {
@@ -11,6 +11,8 @@ test("S8: stepped aircraft and controls survive validation; malicious packets re
   assert.equal(packet.ship.x, ship.x);
   assert.equal(packet.ship.id, "remote");
   assert.deepEqual(packet.input, input);
+  const light = createPlayer(LIGHT_AERO);
+  assert.equal(readPresence(presencePacket(light, input, 0), "light-peer").ship.aero, LIGHT_AERO);
   assert.throws(() => readPresence({ version: 1, sequence: 0, ship: { ...ship, x: Infinity }, input }, "remote"), /Invalid/);
   assert.throws(() => readPresence({ version: 1, sequence: 0, ship, input: { ...input, throttle: 10 } }, "remote"), /Invalid/);
 });

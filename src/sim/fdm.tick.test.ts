@@ -141,7 +141,8 @@ describe("Q-failures — optional deterministic faults", () => {
 
     const outcome = [first, second, third, drift, straight].map((ship) =>
       Object.fromEntries(
-        Object.entries(ship).map(([key, value]) => [key, typeof value === "number" ? Number(value.toFixed(9)) : value]),
+        // The new aero reference is metadata; retain the original physical-state hash.
+        Object.entries(ship).filter(([key]) => key !== "aero").map(([key, value]) => [key, typeof value === "number" ? Number(value.toFixed(9)) : value]),
       ),
     );
     const baseline = createHash("sha256").update(JSON.stringify(outcome)).digest("hex");

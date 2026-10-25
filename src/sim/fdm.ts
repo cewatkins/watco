@@ -52,6 +52,33 @@ export const THRUST_MAX = 2500; // N static — tuning: thrust-to-weight ~1:4 so
 export const THRUST_LAPSE = 0.4; // tuning: share of thrust lost by 85 m/s
 export const STALL_BREAK = 0.62; // tuning: CL kept past the break, so the stall bites then quits
 
+export type AeroDefinition = Readonly<{
+  id: "standard" | "light";
+  mass: number; wingArea: number; liftSlope: number; cl0: number;
+  stallAlphaClean: number; stallAlphaFlaps: number;
+  flapCL: Partial<Record<Flaps, number>>; flapCD: Partial<Record<Flaps, number>>;
+  cd0: number; inducedK: number; thrustMax: number; thrustLapse: number;
+  stallBreak: number; rotateTas: number;
+}>;
+export const STANDARD_AERO: AeroDefinition = {
+  id: "standard", mass: MASS, wingArea: WING_AREA, liftSlope: LIFT_SLOPE, cl0: CL0,
+  stallAlphaClean: STALL_ALPHA_CLEAN, stallAlphaFlaps: STALL_ALPHA_FLAPS,
+  flapCL: FLAP_CL, flapCD: FLAP_CD, cd0: CD0, inducedK: INDUCED_K,
+  thrustMax: THRUST_MAX, thrustLapse: THRUST_LAPSE, stallBreak: STALL_BREAK,
+  rotateTas: 26, // tuning choice: original reduced-model rotation threshold
+};
+export const LIGHT_AERO: AeroDefinition = {
+  ...STANDARD_AERO,
+  id: "light",
+  mass: 553, // kg, public light-trainer empty+useful mass, rounded (quest source)
+  wingArea: 16.58, // m², public 178.5 ft², rounded (quest source)
+  thrustMax: 1600, // tuning choice, not a horsepower-to-static-thrust conversion
+  rotateTas: 22, // tuning choice for lower wing loading
+  // Other coefficients deliberately reuse the standard record's named tuning.
+};
+export const AIRFRAMES = { standard: STANDARD_AERO, light: LIGHT_AERO } as const;
+export type AirframeId = keyof typeof AIRFRAMES;
+
 export const RWY_HDG = 280;
 export const RWY_LENGTH = 2400;
 export const RWY_WIDTH = 46;
@@ -76,6 +103,7 @@ export type PilotInput = {
 };
 
 export type Ship = {
+  aero: AeroDefinition;
   id: string;
   callsign: string;
   x: number;
@@ -208,16 +236,17 @@ export function rhoAt(agl: number, weather: Readonly<Weather> = DEFAULT_WEATHER)
   return 1.225 * Math.exp(-(weather.fieldElevationM + weather.densityAltitudeOffsetM + Math.max(0, agl)) / 8500);
 }
 
-function flapCL(flaps: Flaps): number {
-  return FLAP_CL[flaps] ?? 0;
+function flapCL(flaps: Flaps, aero: AeroDefinition): number {
+  return aero.flapCL[flaps] ?? 0;
 }
 
-function flapCD(flaps: Flaps): number {
-  return FLAP_CD[flaps] ?? 0;
+function flapCD(flaps: Flaps, aero: AeroDefinition): number {
+  return aero.flapCD[flaps] ?? 0;
 }
 
 export function createShip(init: Partial<Ship> & Pick<Ship, "id" | "callsign">): Ship {
   return {
+    aero: STANDARD_AERO,
     x: 0,
     y: GEAR_HEIGHT,
     z: 0,
@@ -247,11 +276,12 @@ export function createShip(init: Partial<Ship> & Pick<Ship, "id" | "callsign">):
   };
 }
 
-export function createPlayer(): Ship {
+export function createPlayer(aero: AeroDefinition = STANDARD_AERO): Ship {
   const f = runwayForward();
   const back = 90;
   return createShip({
     id: "self",
+    aero,
     callsign: "N172FD",
     x: THRESH_X + f.x * back,
     y: GEAR_HEIGHT,
@@ -349,6 +379,7 @@ function refreshInstruments(ship: Ship, tas: number, rho: number, alpha: number,
  */
 export function step(ship: Ship, input: PilotInput, dt: number, weather: Readonly<Weather> = DEFAULT_WEATHER): void {
   if (ship.crashed) return;
+  const aero = ship.aero;
 
   const lever = clamp(input.throttle, 0, 1);
   ship.throttle += (lever - ship.throttle) * Math.min(1, dt * 3.2);
@@ -365,19 +396,19 @@ export function step(ship: Ship, input: PilotInput, dt: number, weather: Readonl
   const vUp = ax * u.x + ay * u.y + az * u.z;
   const alpha = Math.atan2(-vUp, Math.max(vFwd, 0.75));
 
-  const stallA = input.flaps > 0 ? STALL_ALPHA_FLAPS : STALL_ALPHA_CLEAN;
-  let cl = CL0 + LIFT_SLOPE * alpha + flapCL(input.flaps);
+  const stallA = input.flaps > 0 ? aero.stallAlphaFlaps : aero.stallAlphaClean;
+  let cl = aero.cl0 + aero.liftSlope * alpha + flapCL(input.flaps, aero);
   const stalled = alpha > stallA && !ship.onGround && tas > 20;
-  if (alpha > stallA) cl *= STALL_BREAK;
+  if (alpha > stallA) cl *= aero.stallBreak;
   cl = clamp(cl, -0.35, input.flaps > 0 ? 2.05 : 1.62);
-  const cd = CD0 + INDUCED_K * cl * cl + flapCD(input.flaps);
+  const cd = aero.cd0 + aero.inducedK * cl * cl + flapCD(input.flaps, aero);
   const q = 0.5 * rho * tas * tas;
-  const lift = q * WING_AREA * cl;
-  const drag = q * WING_AREA * cd;
-  const thrustLapse = 1 - THRUST_LAPSE * Math.min(tas, 85) / 85;
-  const thrustBase = ship.throttle * THRUST_MAX * thrustLapse;
+  const lift = q * aero.wingArea * cl;
+  const drag = q * aero.wingArea * cd;
+  const thrustLapse = 1 - aero.thrustLapse * Math.min(tas, 85) / 85;
+  const thrustBase = ship.throttle * aero.thrustMax * thrustLapse;
   const thrust = input.failure === "partial-power"
-    ? Math.min(thrustBase, PARTIAL_POWER_MAX_THROTTLE * THRUST_MAX * thrustLapse)
+    ? Math.min(thrustBase, PARTIAL_POWER_MAX_THROTTLE * aero.thrustMax * thrustLapse)
     : thrustBase;
 
   let lx = u.x;
@@ -403,13 +434,13 @@ export function step(ship: Ship, input: PilotInput, dt: number, weather: Readonl
   lz /= lm;
 
   const fx = thrust * f.x + lift * lx + drag * -hx;
-  const fy = thrust * f.y + lift * ly + drag * -hy - MASS * G;
+  const fy = thrust * f.y + lift * ly + drag * -hy - aero.mass * G;
   const fz = thrust * f.z + lift * lz + drag * -hz;
 
   const ail = clamp(input.aileron, -1, 1);
   const ele = clamp(input.elevator, -1, 1);
   const rud = clamp(input.rudder, -1, 1);
-  const rotate = ship.onGround && ele > 0.2 && tas > 26;
+  const rotate = ship.onGround && ele > 0.2 && tas > aero.rotateTas;
 
   if (ship.onGround && !rotate) {
     ship.y = GEAR_HEIGHT;
@@ -418,15 +449,15 @@ export function step(ship: Ship, input: PilotInput, dt: number, weather: Readonl
 
   const pinning = ship.onGround && !rotate;
   if (!pinning) {
-    ship.vx += (fx / MASS) * dt;
-    ship.vy += (fy / MASS) * dt;
-    ship.vz += (fz / MASS) * dt;
+    ship.vx += (fx / aero.mass) * dt;
+    ship.vy += (fy / aero.mass) * dt;
+    ship.vz += (fz / aero.mass) * dt;
   } else {
     const brake = clamp(input.brake, 0, 1);
     const mu = 0.02 + brake * 0.45;
     const hspeed = Math.hypot(ship.vx, ship.vz);
-    ship.vx += (fx / MASS) * dt;
-    ship.vz += (fz / MASS) * dt;
+    ship.vx += (fx / aero.mass) * dt;
+    ship.vz += (fz / aero.mass) * dt;
     if (hspeed > 0.08) {
       const nx = ship.vx / Math.max(hspeed, 0.001);
       const nz = ship.vz / Math.max(hspeed, 0.001);
