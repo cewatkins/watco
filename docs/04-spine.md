@@ -4,7 +4,7 @@ Eight chapters after the one you can already fly. Do them in order. A side quest
 
 Each chapter lists the harness, the files it may touch, what it gives up, and the test that ends it. Copy [templates/chapter.md](templates/chapter.md) into the commit body when you close one.
 
-Status: **S0–S7 done on local main — not pushed to origin.** Next: **S8.**
+Status: **S0–S8 done on local main — not pushed to origin.** Public World remains out of scope.
 
 ---
 
@@ -175,6 +175,10 @@ isolation. No positions, accounts, database, or network persistence.
 ---
 
 ## S8 — Another human, no referee
+
+**Status:** done, live presence selected. See
+[the presence contract](contracts/presence.md) for consent, ephemeral encrypted
+mailbox, deployment requirements, failure behavior, and two-browser acceptance.
 
 **Harness:** OpenCode.
 

@@ -21,7 +21,7 @@ export type CamMode = "chase" | "tower" | "wing" | "spot" | "cockpit";
 
 export type FlightWorld = {
   setNight: (night: boolean) => void;
-  render: (player: Ship, traffic: Ship, dt: number, cam: CamMode, weather?: Readonly<Weather>) => void;
+  render: (player: Ship, traffic: Ship, dt: number, cam: CamMode, weather?: Readonly<Weather>, guests?: readonly Ship[]) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -474,6 +474,8 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
   const playerCraft = buildTrainer(0x1d3557);
   const trafficCraft = buildTrainer(0xe0a32a);
   scene.add(playerCraft.group, trafficCraft.group);
+  const guestCraft = Array.from({ length: 7 }, () => buildTrainer(0x438b8c));
+  for (const craft of guestCraft) { craft.group.visible = false; scene.add(craft.group); }
 
   const blobGeo = new THREE.CircleGeometry(6, 20);
   blobGeo.rotateX(-Math.PI / 2);
@@ -501,8 +503,16 @@ export function mountWorld(canvas: HTMLCanvasElement): FlightWorld {
     (blob.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.32 - ship.y / 240);
   }
 
-  function render(player: Ship, traffic: Ship, dt: number, cam: CamMode, weather: Readonly<Weather> = DEFAULT_WEATHER) {
+  function render(player: Ship, traffic: Ship, dt: number, cam: CamMode, weather: Readonly<Weather> = DEFAULT_WEATHER, guests: readonly Ship[] = []) {
     elapsed += dt;
+    guestCraft.forEach((craft, index) => {
+      const guest = guests[index];
+      craft.group.visible = guest !== undefined;
+      if (guest) {
+        applyAttitude(craft.group, guest);
+        craft.prop.rotation.z += guest.rpm / 60 * Math.PI * 2 * dt;
+      }
+    });
     const wind = windAt(weather, sockBase, sockBaseZ);
     const windSpeed = Math.hypot(wind.x, wind.z);
     sock.position.set(sockBase + wind.x / Math.max(windSpeed, 1) * 1.3, 7.6, sockBaseZ + wind.z / Math.max(windSpeed, 1) * 1.3);

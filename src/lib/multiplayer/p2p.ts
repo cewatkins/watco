@@ -42,6 +42,8 @@ export interface PeerInfo {
 }
 
 export interface P2PRoomOptions {
+  signalCodec?: { encode: (value: unknown) => Promise<unknown>; decode: (value: unknown) => Promise<unknown> };
+  onSignalingStatus?: (error: string | null) => void;
   room: string;
   selfId: string;
   name?: string;
@@ -119,7 +121,8 @@ export class P2PRoom {
   async join(): Promise<void> {
     try {
       await this.pollOnce();
-    } catch {
+    } catch (error) {
+      this.opts.onSignalingStatus?.(error instanceof Error ? error.message : String(error));
       // First poll can fail transiently; the scheduled loop below retries.
     }
     if (this.closed) return;
@@ -143,7 +146,7 @@ export class P2PRoom {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ op: "leave", room: this.opts.room, peer: this.opts.selfId }),
       keepalive: true,
-    }).catch(() => {});
+    }).catch((error: unknown) => console.warn("[p2p] leave failed", error));
   }
 
   /** Send on the unreliable game-state channel (drops stale packets). */
@@ -195,6 +198,7 @@ export class P2PRoom {
     const res = await fetch(`/api/rtc?${params}`);
     if (this.closed) return;
     if (!res.ok) throw new Error(`signaling poll failed: ${res.status}`);
+    this.opts.onSignalingStatus?.(null);
     const body = (await res.json()) as RtcPollResponse;
     if (this.closed) return;
     if (!this.everPolled) {
@@ -214,7 +218,8 @@ export class P2PRoom {
     if (this.closed) return;
     try {
       await this.pollOnce();
-    } catch {
+    } catch (error) {
+      this.opts.onSignalingStatus?.(error instanceof Error ? error.message : String(error));
       // Transient poll failures are expected (tab sleep, deploy roll); retry.
     }
     this.schedulePoll(this.anyPairConnecting() ? FAST_POLL_MS : IDLE_POLL_MS);
@@ -365,6 +370,13 @@ export class P2PRoom {
     roster: Set<string>,
   ): Promise<void> {
     if (this.closed) return;
+    if (this.opts.signalCodec) {
+      try { payload = await this.opts.signalCodec.decode(payload); }
+      catch (error) {
+        this.opts.onSignalingStatus?.(`Invalid encrypted signal: ${error instanceof Error ? error.message : String(error)}`);
+        return;
+      }
+    }
     let slot = this.peers.get(from);
     if (!slot) {
       // New peers dial us in the same poll that adds them to the roster.
@@ -445,6 +457,7 @@ export class P2PRoom {
   }
 
   private async postSignal(to: string, kind: SignalKind, payload: unknown): Promise<void> {
+    const encodedPayload = this.opts.signalCodec ? await this.opts.signalCodec.encode(payload) : payload;
     for (let attempt = 0; ; attempt++) {
       if (this.closed) return;
       try {
@@ -457,7 +470,7 @@ export class P2PRoom {
             from: this.opts.selfId,
             to,
             kind,
-            payload,
+            payload: encodedPayload,
           }),
         });
         if (res.ok) return;
@@ -467,6 +480,7 @@ export class P2PRoom {
           // Delivery gave up; the pair converges on the next offer cycle (or
           // the watchdog rebuilds it). Logged once so failures are visible.
           console.warn(`[p2p] signal ${kind} to ${to} failed after retries`, err);
+          this.opts.onSignalingStatus?.(`Signal delivery failed: ${err instanceof Error ? err.message : String(err)}`);
           return;
         }
         await new Promise((r) => setTimeout(r, SIGNAL_RETRY_DELAYS_MS[attempt]));

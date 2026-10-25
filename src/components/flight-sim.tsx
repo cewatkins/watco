@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { InstrumentPanel, type InstrumentPanelHandle } from "./instrument-panel";
 import {
   FIXED_DT,
+  IDLE_INPUT,
   FIELD_ELEV_FT,
   RWY_HDG,
   RWY_LENGTH,
@@ -20,12 +21,14 @@ import {
   type Flaps,
   type FlightFailure,
   type Ship,
+  type PilotInput,
 } from "@/sim/fdm";
 import { mountWorld, type CamMode, type FlightWorld } from "@/sim/scene";
 import { radioCall } from "@/sim/radio";
 import { FieldMap, type FieldMapHandle } from "./field-map";
 import { CIRCUIT_TASKS, newCircuit, scoreCircuit } from "@/sim/circuit";
 import { readFlightLog, appendFlight, forgetFlights, type FlightRecord, type LandingKind } from "@/sim/log";
+import { LivePresence, type PresenceHandle } from "./live-presence";
 
 declare global {
   interface Window {
@@ -35,6 +38,7 @@ declare global {
       getRoll: () => number;
       getCameraMode: () => CamMode;
       getShipSnapshot: () => Ship | null;
+      getRemoteShips: () => Ship[];
       setKeys: (codes: string[]) => void;
       prepRollTest: () => void;
     };
@@ -122,6 +126,7 @@ export function FlightSim() {
     startedAt: string; airborneSeconds: number; maxAltitudeFt: number;
     wasAirborne: boolean; ended: boolean;
   } | null>(null);
+  const presenceRef = useRef<PresenceHandle>(null);
 
   useEffect(() => {
     try { setFlightLog(readFlightLog(localStorage)); }
@@ -156,6 +161,7 @@ export function FlightSim() {
     let acc = 0;
     let stopped = false;
     let radioElapsed = 1;
+    let latestInput: PilotInput = IDLE_INPUT;
 
     const audio = { ctx: null as AudioContext | null, gain: null as GainNode | null, filter: null as BiquadFilterNode | null, stall: null as GainNode | null };
 
@@ -256,6 +262,7 @@ export function FlightSim() {
         const player = playerRef.current;
         return player ? { ...player } : null;
       },
+      getRemoteShips: () => presenceRef.current?.ships() ?? [],
       setKeys: (codes) => {
         keysRef.current = new Set(codes);
       },
@@ -316,7 +323,7 @@ export function FlightSim() {
               }
             }
             const brake = keys.has("Space") || keys.has("KeyB") || brakeTouch.current ? 1 : 0;
-            step(player, {
+            latestInput = {
               aileron: ail,
               elevator: ele,
               rudder: rud,
@@ -324,7 +331,8 @@ export function FlightSim() {
               brake,
               flaps: flapsRef.current,
               failure: failureRef.current,
-            }, FIXED_DT, weatherRef.current);
+            };
+            step(player, latestInput, FIXED_DT, weatherRef.current);
             circuitRef.current = scoreCircuit(circuitRef.current, player);
             const session = sessionRef.current;
             if (session && !session.ended) {
@@ -402,7 +410,8 @@ export function FlightSim() {
           audio.gain.gain.setTargetAtTime(vol, audio.ctx.currentTime, 0.08);
           audio.stall.gain.setTargetAtTime(player.stalled ? 0.03 : 0, audio.ctx.currentTime, 0.05);
         }
-        world.render(player, traffic, delta, camRef.current, weatherRef.current);
+        presenceRef.current?.publish(player, latestInput);
+        world.render(player, traffic, delta, camRef.current, weatherRef.current, presenceRef.current?.ships());
       }
     };
     const id = { current: 0 };
@@ -493,6 +502,7 @@ export function FlightSim() {
           <p ref={radioRef} className="mt-2">{radioCall(playerRef.current)}</p>
           <p ref={trafficRadioRef} className="mt-2 text-muted">{radioCall(trafficRef.current)}</p>
           <FieldMap ref={mapRef} />
+          <LivePresence ref={presenceRef} />
           <button
             type="button"
             className="mt-2 min-h-11 text-primary"
